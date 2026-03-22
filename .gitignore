@@ -1,0 +1,23 @@
+# Internal knowledge base — keep local only
+redash_kb/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment / secrets
+.env
+.env.*
+*.pem
+*.key
+
+# Logs
+*.log
+/tmp/
