@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Homerun · Istanbul Live</title>
+  <title>Homerun · Istanbul · Live</title>
 
   <!-- MapLibre GL JS -->
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
@@ -22,10 +22,14 @@
   <!-- Review cards overlay (positioned absolutely over map) -->
   <div id="review-overlay"></div>
 
-  <!-- Top-left branding -->
+  <!-- Top-left branding + city toggle -->
   <div id="brand">
     <span class="brand-name">homerun</span>
     <span class="brand-city">Istanbul · Live</span>
+    <div id="city-toggle">
+      <button class="city-btn active" data-city="istanbul">Istanbul</button>
+      <button class="city-btn" data-city="milano">Milano</button>
+    </div>
   </div>
 
   <!-- Bottom HUD -->

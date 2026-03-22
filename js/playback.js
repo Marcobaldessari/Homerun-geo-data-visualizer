@@ -1,7 +1,9 @@
-import { EVENTS, SIM_DURATION } from './data.js';
+import { ISTANBUL_EVENTS, ISTANBUL_SIM_DURATION } from './data-istanbul.js';
 
 export class Playback {
-  constructor({ onFrame, onJobEmit, onReviewEmit, onEnd, onSeek }) {
+  constructor({ events, simDuration, onFrame, onJobEmit, onReviewEmit, onEnd, onSeek }) {
+    this.events = events || ISTANBUL_EVENTS;
+    this.simDuration = simDuration || ISTANBUL_SIM_DURATION;
     this.onFrame = onFrame;
     this.onJobEmit = onJobEmit;
     this.onReviewEmit = onReviewEmit;
@@ -51,8 +53,15 @@ export class Playback {
     });
   }
 
+  loadData(events, simDuration) {
+    this.pause();
+    this.events = events;
+    this.simDuration = simDuration;
+    this._seekTo(0);
+  }
+
   play() {
-    if (this.virtualTime >= SIM_DURATION) {
+    if (this.virtualTime >= this.simDuration) {
       this._seekTo(0);
     }
     this.isPlaying = true;
@@ -71,7 +80,7 @@ export class Playback {
 
   _seekTo(newVirtualTime) {
     // Reset everything and fast-forward to requested time
-    this.virtualTime = Math.max(0, Math.min(newVirtualTime, SIM_DURATION));
+    this.virtualTime = Math.max(0, Math.min(newVirtualTime, this.simDuration));
     this.pausedAt = this.virtualTime;
     this.wallStart = performance.now();
 
@@ -81,8 +90,8 @@ export class Playback {
     this.onSeek(this.virtualTime);
     const FADE_OUT_BUFFER = 8000; // ms: keep arcs that started within this window
 
-    for (let i = 0; i < EVENTS.length; i++) {
-      const ev = EVENTS[i];
+    for (let i = 0; i < this.events.length; i++) {
+      const ev = this.events[i];
       if (ev.timestamp > this.virtualTime) break;
       this.eventPointer = i + 1;
 
@@ -103,15 +112,15 @@ export class Playback {
     const elapsed = performance.now() - this.wallStart;
     this.virtualTime = Math.min(
       this.pausedAt + elapsed * this.speedFactor,
-      SIM_DURATION
+      this.simDuration
     );
 
     // Emit new events
     while (
-      this.eventPointer < EVENTS.length &&
-      EVENTS[this.eventPointer].timestamp <= this.virtualTime
+      this.eventPointer < this.events.length &&
+      this.events[this.eventPointer].timestamp <= this.virtualTime
     ) {
-      const ev = EVENTS[this.eventPointer++];
+      const ev = this.events[this.eventPointer++];
       if (ev.type === 'job') {
         const arc = { ...ev, emittedAt: ev.timestamp };
         this.activeArcs.push(arc);
@@ -129,7 +138,7 @@ export class Playback {
 
     this._renderFrame(this.virtualTime);
 
-    if (this.virtualTime >= SIM_DURATION) {
+    if (this.virtualTime >= this.simDuration) {
       this.pause();
       this.onEnd();
       return;
@@ -154,7 +163,7 @@ export class Playback {
 
   _updateTimeDisplay(vt) {
     const elapsed = Math.floor(vt / 1000);
-    const total = Math.floor(SIM_DURATION / 1000);
+    const total = Math.floor(this.simDuration / 1000);
     const fmt = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
     document.getElementById('time-display').textContent = `${fmt(elapsed)} / ${fmt(total)}`;
   }
