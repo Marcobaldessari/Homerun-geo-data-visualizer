@@ -1,6 +1,9 @@
 # Internal knowledge base — keep local only
 redash_kb/
 
+# MCP config with API keys — keep local only
+.mcp.json
+
 # macOS
 .DS_Store
 .AppleDouble
