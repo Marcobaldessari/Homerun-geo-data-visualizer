@@ -60,7 +60,13 @@ export function initMap() {
     let delta = e.deltaY;
     if (e.deltaMode === 1) delta *= 30;
     if (e.deltaMode === 2) delta *= 300;
-    map.easeTo({ zoom: clampZoom(map.getZoom() - delta / 300), duration: 120 });
+    const newZoom = clampZoom(map.getZoom() - delta / 300);
+    // ctrlKey === true means trackpad pinch — needs instant response like mobile
+    if (e.ctrlKey) {
+      map.setZoom(newZoom);
+    } else {
+      map.easeTo({ zoom: newZoom, duration: 120 });
+    }
   }, { passive: false });
 
   // Left-drag → rotate bearing + adjust pitch
