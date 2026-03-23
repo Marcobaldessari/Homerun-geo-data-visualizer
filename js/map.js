@@ -59,7 +59,7 @@ export function initMap() {
     lastX = e.clientX;
     lastY = e.clientY;
     map.setBearing(map.getBearing() + dx * 0.4);
-    map.setPitch(Math.max(0, Math.min(80, map.getPitch() + dy * 0.3)));
+    map.setPitch(Math.max(0, Math.min(80, map.getPitch() - dy * 0.3)));
   });
 
   window.addEventListener('mouseup', e => {
