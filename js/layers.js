@@ -3,25 +3,25 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ── Comet ──────────────────────────────────────────────────────────────────
-const COMET_WIDTH_PX   = 5;     // core line thickness in pixels
-const COMET_ALPHA      = 220;   // core brightness (0–255)
-const TRAIL_LENGTH     = 400;   // tail length in ms — shorter = faster fade-out
-                                //   also controls how much of the arc is visible at once
+const COMET_WIDTH_PX = 5; // core line thickness in pixels
+const COMET_ALPHA = 220; // core brightness (0–255)
+const TRAIL_LENGTH = 400; // tail length in ms — shorter = faster fade-out
+//   also controls how much of the arc is visible at once
 
 // ── Glow ───────────────────────────────────────────────────────────────────
-const GLOW_WIDTH_PX    = 16;    // glow halo thickness in pixels
-const GLOW_ALPHA       = 40;    // glow brightness (0–255), keep well below COMET_ALPHA
+const GLOW_WIDTH_PX = 16; // glow halo thickness in pixels
+const GLOW_ALPHA = 40; // glow brightness (0–255), keep well below COMET_ALPHA
 
 // ── Arc shape ──────────────────────────────────────────────────────────────
-const MAX_ALT_M        = 3000;  // peak altitude of the arch in metres
-const ARC_WAYPOINTS    = 20;    // number of points along the arc (more = smoother curve)
+const MAX_ALT_M = 3000; // peak altitude of the arch in metres
+const ARC_WAYPOINTS = 20; // number of points along the arc (more = smoother curve)
 
 // ── Pulse rings ────────────────────────────────────────────────────────────
-const PULSE_DURATION   = 1000;  // how long the ring expands, in ms
-const PULSE_MIN_RADIUS = 4;     // starting radius in pixels
-const PULSE_MAX_RADIUS = 36;    // ending radius in pixels
-const PULSE_ALPHA      = 220;   // peak brightness of the ring (0–255)
-const PULSE_WIDTH_PX   = 1.5;   // ring stroke thickness in pixels
+const PULSE_DURATION = 800; // how long the ring expands, in ms
+const PULSE_MIN_RADIUS = 4; // starting radius in pixels
+const PULSE_MAX_RADIUS = 20; // ending radius in pixels
+const PULSE_ALPHA = 250; // peak brightness of the ring (0–255)
+const PULSE_WIDTH_PX = 2; // ring stroke thickness in pixels
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Draw speed (arcDuration) and hold time (arcFadeDelay) are per-dataset:
@@ -31,25 +31,26 @@ const PULSE_WIDTH_PX   = 1.5;   // ring stroke thickness in pixels
 
 // Color palette per service category
 export const CATEGORY_COLORS = {
-  cleaning:  { source: [0,   212, 255], target: [0,   102, 255] },
-  repair:    { source: [255, 107,  53], target: [255,  23,  68] },
-  beauty:    { source: [224,  64, 251], target: [255,  64, 129] },
-  moving:    { source: [105, 240, 174], target: [0,   188, 212] },
-  education: { source: [255, 234,   0], target: [255, 145,   0] },
-  events:    { source: [255, 110,  64], target: [245,   0,  87] },
-  other:     { source: [176, 190, 197], target: [ 96, 125, 139] },
+  cleaning: { source: [0, 212, 255], target: [0, 102, 255] },
+  repair: { source: [255, 107, 53], target: [255, 23, 68] },
+  beauty: { source: [224, 64, 251], target: [255, 64, 129] },
+  moving: { source: [105, 240, 174], target: [0, 188, 212] },
+  education: { source: [255, 234, 0], target: [255, 145, 0] },
+  events: { source: [255, 110, 64], target: [245, 0, 87] },
+  other: { source: [176, 190, 197], target: [96, 125, 139] },
 };
 
 function categoryColor(category, type) {
   const c = CATEGORY_COLORS[category] || CATEGORY_COLORS.other;
-  return type === 'source' ? c.source : c.target;
+  return type === "source" ? c.source : c.target;
 }
 
 // ── Arc waypoints ──────────────────────────────────────────────────────────
 
 function computeArcWaypoints(arc) {
   if (arc._tripWaypoints) return arc._tripWaypoints;
-  const { customerLng, customerLat, proLng, proLat, arcDuration, emittedAt } = arc;
+  const { customerLng, customerLat, proLng, proLat, arcDuration, emittedAt } =
+    arc;
   const path = [];
   const timestamps = [];
   for (let i = 0; i < ARC_WAYPOINTS; i++) {
@@ -69,12 +70,17 @@ function computeArcWaypoints(arc) {
 // ── Pulse helpers ──────────────────────────────────────────────────────────
 
 // Quintic ease-out: fast start, decelerates sharply at the end
-function easeOutQuint(t) { return 1 - Math.pow(1 - t, 5); }
+function easeOutQuint(t) {
+  return 1 - Math.pow(1 - t, 5);
+}
 
 function sourcePulseRadius(arc, virtualTime) {
   const age = virtualTime - arc.emittedAt;
   if (age < 0 || age > PULSE_DURATION) return 0;
-  return PULSE_MIN_RADIUS + easeOutQuint(age / PULSE_DURATION) * (PULSE_MAX_RADIUS - PULSE_MIN_RADIUS);
+  return (
+    PULSE_MIN_RADIUS +
+    easeOutQuint(age / PULSE_DURATION) * (PULSE_MAX_RADIUS - PULSE_MIN_RADIUS)
+  );
 }
 function sourcePulseAlpha(arc, virtualTime) {
   const age = virtualTime - arc.emittedAt;
@@ -86,7 +92,10 @@ function destPulseRadius(arc, virtualTime) {
   const age = virtualTime - arc.emittedAt;
   const t = age - arc.arcDuration;
   if (t < 0 || t > PULSE_DURATION) return 0;
-  return PULSE_MIN_RADIUS + easeOutQuint(t / PULSE_DURATION) * (PULSE_MAX_RADIUS - PULSE_MIN_RADIUS);
+  return (
+    PULSE_MIN_RADIUS +
+    easeOutQuint(t / PULSE_DURATION) * (PULSE_MAX_RADIUS - PULSE_MIN_RADIUS)
+  );
 }
 function destPulseAlpha(arc, virtualTime) {
   const age = virtualTime - arc.emittedAt;
@@ -100,12 +109,15 @@ export function buildLayers(activeArcs, virtualTime) {
 
   // Main arc — comet draws source→dest, comet tail fades as it erases
   const tripsLayer = new TripsLayer({
-    id: 'arcs-trips',
+    id: "arcs-trips",
     data: activeArcs,
-    getPath: d => computeArcWaypoints(d).path,
-    getTimestamps: d => computeArcWaypoints(d).timestamps,
-    getColor: d => [...categoryColor(d.serviceCategory, 'source'), COMET_ALPHA],
-    positionFormat: 'XYZ',
+    getPath: (d) => computeArcWaypoints(d).path,
+    getTimestamps: (d) => computeArcWaypoints(d).timestamps,
+    getColor: (d) => [
+      ...categoryColor(d.serviceCategory, "source"),
+      COMET_ALPHA,
+    ],
+    positionFormat: "XYZ",
     currentTime: virtualTime,
     trailLength: TRAIL_LENGTH,
     widthMinPixels: COMET_WIDTH_PX,
@@ -114,12 +126,15 @@ export function buildLayers(activeArcs, virtualTime) {
 
   // Glow layer
   const glowLayer = new TripsLayer({
-    id: 'arcs-trips-glow',
+    id: "arcs-trips-glow",
     data: activeArcs,
-    getPath: d => computeArcWaypoints(d).path,
-    getTimestamps: d => computeArcWaypoints(d).timestamps,
-    getColor: d => [...categoryColor(d.serviceCategory, 'source'), GLOW_ALPHA],
-    positionFormat: 'XYZ',
+    getPath: (d) => computeArcWaypoints(d).path,
+    getTimestamps: (d) => computeArcWaypoints(d).timestamps,
+    getColor: (d) => [
+      ...categoryColor(d.serviceCategory, "source"),
+      GLOW_ALPHA,
+    ],
+    positionFormat: "XYZ",
     currentTime: virtualTime,
     trailLength: TRAIL_LENGTH,
     widthMinPixels: GLOW_WIDTH_PX,
@@ -128,33 +143,39 @@ export function buildLayers(activeArcs, virtualTime) {
 
   // Source pulse — radiates when arc starts (outline ring, no fill)
   const sourcePulseLayer = new ScatterplotLayer({
-    id: 'source-pulse',
+    id: "source-pulse",
     data: activeArcs,
-    getPosition: d => [d.customerLng, d.customerLat],
-    getRadius: d => sourcePulseRadius(d, virtualTime),
+    getPosition: (d) => [d.customerLng, d.customerLat],
+    getRadius: (d) => sourcePulseRadius(d, virtualTime),
     getFillColor: [0, 0, 0, 0],
-    getLineColor: d => [...categoryColor(d.serviceCategory, 'source'), sourcePulseAlpha(d, virtualTime)],
+    getLineColor: (d) => [
+      ...categoryColor(d.serviceCategory, "source"),
+      sourcePulseAlpha(d, virtualTime),
+    ],
     stroked: true,
     filled: false,
     getLineWidth: PULSE_WIDTH_PX,
-    lineWidthUnits: 'pixels',
-    radiusUnits: 'pixels',
+    lineWidthUnits: "pixels",
+    radiusUnits: "pixels",
     updateTriggers: { getRadius: virtualTime, getLineColor: virtualTime },
   });
 
   // Destination pulse — radiates when line arrives (outline ring, no fill)
   const destPulseLayer = new ScatterplotLayer({
-    id: 'dest-pulse',
+    id: "dest-pulse",
     data: activeArcs,
-    getPosition: d => [d.proLng, d.proLat],
-    getRadius: d => destPulseRadius(d, virtualTime),
+    getPosition: (d) => [d.proLng, d.proLat],
+    getRadius: (d) => destPulseRadius(d, virtualTime),
     getFillColor: [0, 0, 0, 0],
-    getLineColor: d => [...categoryColor(d.serviceCategory, 'source'), destPulseAlpha(d, virtualTime)],
+    getLineColor: (d) => [
+      ...categoryColor(d.serviceCategory, "source"),
+      destPulseAlpha(d, virtualTime),
+    ],
     stroked: true,
     filled: false,
     getLineWidth: PULSE_WIDTH_PX,
-    lineWidthUnits: 'pixels',
-    radiusUnits: 'pixels',
+    lineWidthUnits: "pixels",
+    radiusUnits: "pixels",
     updateTriggers: { getRadius: virtualTime, getLineColor: virtualTime },
   });
 
