@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ── Comet ──────────────────────────────────────────────────────────────────
-const COMET_WIDTH_PX        = 5; // core line thickness in pixels (desktop)
+const COMET_WIDTH_PX = 5; // core line thickness in pixels (desktop)
 const COMET_WIDTH_PX_MOBILE = 3; // core line thickness in pixels (mobile)
 const COMET_ALPHA = 220; // core brightness (0–255)
 const TRAIL_LENGTH = 1100; // tail length in ms — shorter = faster fade-out
@@ -14,7 +14,7 @@ const GLOW_WIDTH_PX = 16; // glow halo thickness in pixels
 const GLOW_ALPHA = 40; // glow brightness (0–255), keep well below COMET_ALPHA
 
 // ── Arc shape ──────────────────────────────────────────────────────────────
-const MAX_ALT_M = 3000; // peak altitude of the arch in metres
+const ALT_SCALE = 0.19; // peak altitude as a fraction of arc length (longer arc → higher arch)
 const ARC_WAYPOINTS = 20; // number of points along the arc (more = smoother curve)
 
 // ── Pulse rings ────────────────────────────────────────────────────────────
@@ -29,6 +29,19 @@ const BLOB_MAX_RADIUS = 5; // peak radius of the filled circle in pixels
 const BLOB_EXPAND_MS = 900; // duration of the elastic expand phase in ms
 const BLOB_SHRINK_MS = 1000; // duration of the shrink + fade-out phase in ms
 const BLOB_ALPHA = 220; // peak fill opacity (0–255)
+
+// ── Light flash ────────────────────────────────────────────────────────────
+// Three concentric white circles (outer → core) faked radial gradient,
+// rendered with additive blending so they brighten the map underneath.
+const FLASH_ENABLED = false; // set to false to disable the flash entirely
+const FLASH_DURATION = 300; // total lifetime of the flash in ms
+const FLASH_RISE_MS = 60; // how quickly it reaches peak brightness
+const FLASH_OUTER_R = 16; // outermost ring radius in pixels
+const FLASH_MID_R = 12; // mid ring radius in pixels
+const FLASH_CORE_R = 9; // bright core radius in pixels
+const FLASH_OUTER_A = 60; // peak alpha of outer ring  (0–255)
+const FLASH_MID_A = 130; // peak alpha of mid ring    (0–255)
+const FLASH_CORE_A = 220; // peak alpha of core        (0–255)
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Draw speed (arcDuration) and hold time (arcFadeDelay) are per-dataset:
@@ -60,12 +73,16 @@ function computeArcWaypoints(arc) {
   if (arc._tripWaypoints) return arc._tripWaypoints;
   const { customerLng, customerLat, proLng, proLat, arcDuration, emittedAt } =
     arc;
+  const dLng = proLng - customerLng;
+  const dLat = proLat - customerLat;
+  const distM = Math.sqrt(dLng * dLng + dLat * dLat) * 111000; // approx metres (1° ≈ 111 km)
+  const peakAlt = distM * ALT_SCALE;
   const path = [];
   const timestamps = [];
   for (let i = 0; i < ARC_WAYPOINTS; i++) {
     const t = i / (ARC_WAYPOINTS - 1); // position along arc (0→1)
     const timeFraction = t; // linear — the parabolic altitude already provides organic rhythm
-    const alt = 4 * MAX_ALT_M * t * (1 - t); // parabola: 0 at endpoints, MAX_ALT_M at midpoint
+    const alt = 4 * peakAlt * t * (1 - t); // parabola: 0 at endpoints, peakAlt at midpoint
     path.push([
       customerLng + t * (proLng - customerLng), // straight line in X
       customerLat + t * (proLat - customerLat), // straight line in Y
@@ -108,6 +125,13 @@ function blobAlpha(age) {
   return Math.round((1 - t) * BLOB_ALPHA);
 }
 
+function flashAlpha(age, peakAlpha) {
+  if (age < 0 || age > FLASH_DURATION) return 0;
+  const t = age / FLASH_DURATION;
+  const rise = Math.min(age / FLASH_RISE_MS, 1);
+  return Math.round(rise * (1 - t) * peakAlpha);
+}
+
 function sourcePulseRadius(arc, virtualTime) {
   const age = virtualTime - arc.emittedAt;
   if (age < 0 || age > PULSE_DURATION) return 0;
@@ -140,6 +164,7 @@ function destPulseAlpha(arc, virtualTime) {
 
 export function buildLayers(activeArcs, virtualTime) {
   const { TripsLayer, ScatterplotLayer } = deck;
+  const ADDITIVE = { blend: true, blendFunc: [770, 1] }; // SRC_ALPHA + ONE
 
   // Main arc — comet draws source→dest, comet tail fades as it erases
   const tripsLayer = new TripsLayer({
@@ -241,9 +266,113 @@ export function buildLayers(activeArcs, virtualTime) {
     updateTriggers: { getRadius: virtualTime, getFillColor: virtualTime },
   });
 
+  // Source flash — 3 concentric white circles at arc origin, additive blend
+  const srcFlashOuter = new ScatterplotLayer({
+    id: "src-flash-outer",
+    data: activeArcs,
+    getPosition: (d) => [d.customerLng, d.customerLat],
+    getRadius: () => FLASH_OUTER_R,
+    getFillColor: (d) => [
+      255,
+      255,
+      255,
+      flashAlpha(virtualTime - d.emittedAt, FLASH_OUTER_A),
+    ],
+    radiusUnits: "pixels",
+    parameters: ADDITIVE,
+    updateTriggers: { getFillColor: virtualTime },
+  });
+  const srcFlashMid = new ScatterplotLayer({
+    id: "src-flash-mid",
+    data: activeArcs,
+    getPosition: (d) => [d.customerLng, d.customerLat],
+    getRadius: () => FLASH_MID_R,
+    getFillColor: (d) => [
+      255,
+      255,
+      255,
+      flashAlpha(virtualTime - d.emittedAt, FLASH_MID_A),
+    ],
+    radiusUnits: "pixels",
+    parameters: ADDITIVE,
+    updateTriggers: { getFillColor: virtualTime },
+  });
+  const srcFlashCore = new ScatterplotLayer({
+    id: "src-flash-core",
+    data: activeArcs,
+    getPosition: (d) => [d.customerLng, d.customerLat],
+    getRadius: () => FLASH_CORE_R,
+    getFillColor: (d) => [
+      255,
+      255,
+      255,
+      flashAlpha(virtualTime - d.emittedAt, FLASH_CORE_A),
+    ],
+    radiusUnits: "pixels",
+    parameters: ADDITIVE,
+    updateTriggers: { getFillColor: virtualTime },
+  });
+
+  // Dest flash — same 3 circles at arc destination, triggered at arcDuration
+  const dstFlashOuter = new ScatterplotLayer({
+    id: "dst-flash-outer",
+    data: activeArcs,
+    getPosition: (d) => [d.proLng, d.proLat],
+    getRadius: () => FLASH_OUTER_R,
+    getFillColor: (d) => [
+      255,
+      255,
+      255,
+      flashAlpha(virtualTime - d.emittedAt - d.arcDuration, FLASH_OUTER_A),
+    ],
+    radiusUnits: "pixels",
+    parameters: ADDITIVE,
+    updateTriggers: { getFillColor: virtualTime },
+  });
+  const dstFlashMid = new ScatterplotLayer({
+    id: "dst-flash-mid",
+    data: activeArcs,
+    getPosition: (d) => [d.proLng, d.proLat],
+    getRadius: () => FLASH_MID_R,
+    getFillColor: (d) => [
+      255,
+      255,
+      255,
+      flashAlpha(virtualTime - d.emittedAt - d.arcDuration, FLASH_MID_A),
+    ],
+    radiusUnits: "pixels",
+    parameters: ADDITIVE,
+    updateTriggers: { getFillColor: virtualTime },
+  });
+  const dstFlashCore = new ScatterplotLayer({
+    id: "dst-flash-core",
+    data: activeArcs,
+    getPosition: (d) => [d.proLng, d.proLat],
+    getRadius: () => FLASH_CORE_R,
+    getFillColor: (d) => [
+      255,
+      255,
+      255,
+      flashAlpha(virtualTime - d.emittedAt - d.arcDuration, FLASH_CORE_A),
+    ],
+    radiusUnits: "pixels",
+    parameters: ADDITIVE,
+    updateTriggers: { getFillColor: virtualTime },
+  });
+
   return [
     glowLayer,
     tripsLayer,
+    ...(FLASH_ENABLED
+      ? [
+          srcFlashOuter,
+          srcFlashMid,
+          srcFlashCore,
+          dstFlashOuter,
+          dstFlashMid,
+          dstFlashCore,
+        ]
+      : []),
     sourceBlobLayer,
     destBlobLayer,
     sourcePulseLayer,
