@@ -23,6 +23,12 @@ const PULSE_MAX_RADIUS = 20; // ending radius in pixels
 const PULSE_ALPHA = 250; // peak brightness of the ring (0–255)
 const PULSE_WIDTH_PX = 2; // ring stroke thickness in pixels
 
+// ── Blob circles ───────────────────────────────────────────────────────────
+const BLOB_MAX_RADIUS = 5; // peak radius of the filled circle in pixels
+const BLOB_EXPAND_MS = 900; // duration of the elastic expand phase in ms
+const BLOB_SHRINK_MS = 1000; // duration of the shrink + fade-out phase in ms
+const BLOB_ALPHA = 220; // peak fill opacity (0–255)
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Draw speed (arcDuration) and hold time (arcFadeDelay) are per-dataset:
 //   js/data-istanbul.js  ~line 1165
@@ -72,6 +78,30 @@ function computeArcWaypoints(arc) {
 // Quintic ease-out: fast start, decelerates sharply at the end
 function easeOutQuint(t) {
   return 1 - Math.pow(1 - t, 5);
+}
+
+// Elastic ease-out: overshoots then settles — used for blob expand
+function easeOutElastic(t) {
+  if (t === 0 || t === 1) return t;
+  const c4 = (2 * Math.PI) / 3;
+  return Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c4) + 1;
+}
+
+function blobRadius(age) {
+  if (age < 0) return 0;
+  if (age < BLOB_EXPAND_MS)
+    return easeOutElastic(age / BLOB_EXPAND_MS) * BLOB_MAX_RADIUS;
+  const t = (age - BLOB_EXPAND_MS) / BLOB_SHRINK_MS;
+  if (t > 1) return 0;
+  return (1 - easeOutQuint(t)) * BLOB_MAX_RADIUS;
+}
+
+function blobAlpha(age) {
+  if (age < 0) return 0;
+  if (age < BLOB_EXPAND_MS) return BLOB_ALPHA;
+  const t = (age - BLOB_EXPAND_MS) / BLOB_SHRINK_MS;
+  if (t > 1) return 0;
+  return Math.round((1 - t) * BLOB_ALPHA);
 }
 
 function sourcePulseRadius(arc, virtualTime) {
@@ -179,5 +209,40 @@ export function buildLayers(activeArcs, virtualTime) {
     updateTriggers: { getRadius: virtualTime, getLineColor: virtualTime },
   });
 
-  return [glowLayer, tripsLayer, sourcePulseLayer, destPulseLayer];
+  // Source blob — filled circle that elastically expands then shrinks+fades at arc origin
+  const sourceBlobLayer = new ScatterplotLayer({
+    id: "source-blob",
+    data: activeArcs,
+    getPosition: (d) => [d.customerLng, d.customerLat],
+    getRadius: (d) => blobRadius(virtualTime - d.emittedAt),
+    getFillColor: (d) => [
+      ...categoryColor(d.serviceCategory, "source"),
+      blobAlpha(virtualTime - d.emittedAt),
+    ],
+    radiusUnits: "pixels",
+    updateTriggers: { getRadius: virtualTime, getFillColor: virtualTime },
+  });
+
+  // Dest blob — same effect, triggered when the comet arrives
+  const destBlobLayer = new ScatterplotLayer({
+    id: "dest-blob",
+    data: activeArcs,
+    getPosition: (d) => [d.proLng, d.proLat],
+    getRadius: (d) => blobRadius(virtualTime - d.emittedAt - d.arcDuration),
+    getFillColor: (d) => [
+      ...categoryColor(d.serviceCategory, "source"),
+      blobAlpha(virtualTime - d.emittedAt - d.arcDuration),
+    ],
+    radiusUnits: "pixels",
+    updateTriggers: { getRadius: virtualTime, getFillColor: virtualTime },
+  });
+
+  return [
+    glowLayer,
+    tripsLayer,
+    sourceBlobLayer,
+    destBlobLayer,
+    sourcePulseLayer,
+    destPulseLayer,
+  ];
 }
