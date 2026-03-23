@@ -18,7 +18,7 @@ const map = initMap();
 
 // ── 2. Initialise Deck.gl overlay ─────────────────────────────────────────
 const deckOverlay = new deck.MapboxOverlay({
-  interleaved: false,
+  interleaved: true,
   layers: [],
 });
 
