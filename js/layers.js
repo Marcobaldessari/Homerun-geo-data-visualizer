@@ -21,14 +21,7 @@ const TRAIL_LENGTH = 6500;
 function computeArcWaypoints(arc) {
   if (arc._tripWaypoints) return arc._tripWaypoints;
   const { customerLng, customerLat, proLng, proLat, arcDuration, emittedAt } = arc;
-  const dLng = proLng - customerLng;
-  const dLat = proLat - customerLat;
-  const dist = Math.sqrt(dLng * dLng + dLat * dLat) || 1e-9;
-  const elevate = dist * 0.35;
-  // Control point: midpoint offset perpendicular to source→dest vector
-  const ctrlLng = (customerLng + proLng) / 2 - (dLat / dist) * elevate;
-  const ctrlLat = (customerLat + proLat) / 2 + (dLng / dist) * elevate;
-  // Arc peak altitude in metres
+  // Arc peak altitude in metres — only Z arches, X/Y stay on a straight line
   const MAX_ALT_M = 3000;
   const N = 20;
   const path = [];
@@ -37,8 +30,8 @@ function computeArcWaypoints(arc) {
     const t = i / (N - 1);
     const alt = 4 * MAX_ALT_M * t * (1 - t); // parabola: 0 at endpoints, MAX_ALT_M at midpoint
     path.push([
-      (1 - t) * (1 - t) * customerLng + 2 * (1 - t) * t * ctrlLng + t * t * proLng,
-      (1 - t) * (1 - t) * customerLat + 2 * (1 - t) * t * ctrlLat + t * t * proLat,
+      customerLng + t * (proLng - customerLng), // straight line in X
+      customerLat + t * (proLat - customerLat), // straight line in Y
       alt,
     ]);
     timestamps.push(emittedAt + t * arcDuration);
