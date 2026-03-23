@@ -3,7 +3,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ── Comet ──────────────────────────────────────────────────────────────────
-const COMET_WIDTH_PX = 5; // core line thickness in pixels
+const COMET_WIDTH_PX        = 5; // core line thickness in pixels (desktop)
+const COMET_WIDTH_PX_MOBILE = 3; // core line thickness in pixels (mobile)
 const COMET_ALPHA = 220; // core brightness (0–255)
 const TRAIL_LENGTH = 1100; // tail length in ms — shorter = faster fade-out
 //   also controls how much of the arc is visible at once
@@ -34,6 +35,8 @@ const BLOB_ALPHA = 220; // peak fill opacity (0–255)
 //   js/data-istanbul.js  ~line 1165
 //   js/data-milano.js    ~line 570
 // ═══════════════════════════════════════════════════════════════════════════
+
+const IS_MOBILE = window.innerWidth <= 768;
 
 // Color palette per service category
 export const CATEGORY_COLORS = {
@@ -150,7 +153,7 @@ export function buildLayers(activeArcs, virtualTime) {
     positionFormat: "XYZ",
     currentTime: virtualTime,
     trailLength: TRAIL_LENGTH,
-    widthMinPixels: COMET_WIDTH_PX,
+    widthMinPixels: IS_MOBILE ? COMET_WIDTH_PX_MOBILE : COMET_WIDTH_PX,
     fadeTrail: true,
   });
 

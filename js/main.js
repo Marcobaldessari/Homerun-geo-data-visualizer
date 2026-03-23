@@ -6,9 +6,11 @@ import { incrementJobs, incrementReviews, resetStats } from './stats.js';
 import { ISTANBUL_EVENTS, ISTANBUL_SIM_DURATION, ISTANBUL_CENTER, ISTANBUL_ZOOM } from './data-istanbul.js';
 import { MILANO_EVENTS, MILANO_SIM_DURATION, MILANO_CENTER, MILANO_ZOOM } from './data-milano.js';
 
+const isMobile = window.innerWidth <= 768;
+
 const CITIES = {
-  istanbul: { events: ISTANBUL_EVENTS, simDuration: ISTANBUL_SIM_DURATION, center: ISTANBUL_CENTER, zoom: ISTANBUL_ZOOM, label: 'Istanbul' },
-  milano:   { events: MILANO_EVENTS,   simDuration: MILANO_SIM_DURATION,   center: MILANO_CENTER,   zoom: MILANO_ZOOM,   label: 'Milano'   },
+  istanbul: { events: ISTANBUL_EVENTS, simDuration: ISTANBUL_SIM_DURATION, center: ISTANBUL_CENTER, zoom: isMobile ? 9 : ISTANBUL_ZOOM, label: 'Istanbul' },
+  milano:   { events: MILANO_EVENTS,   simDuration: MILANO_SIM_DURATION,   center: MILANO_CENTER,   zoom: isMobile ? 9 : MILANO_ZOOM,   label: 'Milano'   },
 };
 
 let currentCity = 'istanbul';
