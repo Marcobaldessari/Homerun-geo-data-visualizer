@@ -87,7 +87,7 @@ export function buildLayers(activeArcs, virtualTime) {
     positionFormat: 'XYZ',
     currentTime: virtualTime,
     trailLength: TRAIL_LENGTH,
-    widthMinPixels: 3,
+    widthMinPixels: 5,
     fadeTrail: true,
   });
 
@@ -104,7 +104,7 @@ export function buildLayers(activeArcs, virtualTime) {
     positionFormat: 'XYZ',
     currentTime: virtualTime,
     trailLength: TRAIL_LENGTH,
-    widthMinPixels: 10,
+    widthMinPixels: 16,
     fadeTrail: true,
   });
 
