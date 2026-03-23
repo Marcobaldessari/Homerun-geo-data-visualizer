@@ -135,7 +135,7 @@ export function buildLayers(activeArcs, virtualTime) {
     getRadius: d => destPulseRadius(d, virtualTime),
     getFillColor: [0, 0, 0, 0],
     getLineColor: d => {
-      const col = categoryColor(d.serviceCategory, 'target');
+      const col = categoryColor(d.serviceCategory, 'source');
       return [...col, destPulseAlpha(d, virtualTime)];
     },
     stroked: true,
