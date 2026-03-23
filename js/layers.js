@@ -28,14 +28,18 @@ function computeArcWaypoints(arc) {
   // Control point: midpoint offset perpendicular to source→dest vector
   const ctrlLng = (customerLng + proLng) / 2 - (dLat / dist) * elevate;
   const ctrlLat = (customerLat + proLat) / 2 + (dLng / dist) * elevate;
+  // Arc peak altitude in metres — fixed so arcs always arch visibly at city scale
+  const MAX_ALT_M = 2000;
   const N = 20;
   const path = [];
   const timestamps = [];
   for (let i = 0; i < N; i++) {
     const t = i / (N - 1);
+    const alt = 4 * MAX_ALT_M * t * (1 - t); // parabola: 0 at endpoints, MAX_ALT_M at midpoint
     path.push([
       (1 - t) * (1 - t) * customerLng + 2 * (1 - t) * t * ctrlLng + t * t * proLng,
       (1 - t) * (1 - t) * customerLat + 2 * (1 - t) * t * ctrlLat + t * t * proLat,
+      alt,
     ]);
     timestamps.push(emittedAt + t * arcDuration);
   }

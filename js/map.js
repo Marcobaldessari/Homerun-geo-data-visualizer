@@ -28,7 +28,7 @@ export function initMap() {
     },
     center: [28.97, 41.01], // Istanbul
     zoom: 11,
-    pitch: 0,
+    pitch: 45,
     bearing: 0,
     antialias: true,
   });
