@@ -14,52 +14,39 @@ function categoryColor(category, type) {
   return type === 'source' ? c.source : c.target;
 }
 
-// ── Arc position animation ─────────────────────────────────────────────────
-// Draw phase: target moves src→dst. Erase phase: source moves src→dst.
+// trailLength = arcDuration + arcFadeDelay keeps the full arc in the window during hold
+const TRAIL_LENGTH = 6500;
 
-function arcSourcePos(arc, virtualTime) {
-  const age = virtualTime - arc.emittedAt;
-  const { arcDuration, arcFadeDelay } = arc;
-  const src = [arc.customerLng, arc.customerLat];
-  const dst = [arc.proLng, arc.proLat];
-
-  const eraseStart = arcDuration + arcFadeDelay;
-  if (age < eraseStart) return src;
-
-  const t = Math.min((age - eraseStart) / 500, 1);
-  return [src[0] + (dst[0] - src[0]) * t, src[1] + (dst[1] - src[1]) * t];
-}
-
-function arcTargetPos(arc, virtualTime) {
-  const age = virtualTime - arc.emittedAt;
-  const { arcDuration } = arc;
-  const src = [arc.customerLng, arc.customerLat];
-  const dst = [arc.proLng, arc.proLat];
-
-  if (age <= 0) return src;
-  if (age >= arcDuration) return dst;
-
-  const t = age / arcDuration;
-  return [src[0] + (dst[0] - src[0]) * t, src[1] + (dst[1] - src[1]) * t];
-}
-
-// Full opacity during draw + hold; fades out during erase (500ms)
-function arcOpacity(arc, virtualTime) {
-  const age = virtualTime - arc.emittedAt;
-  const { arcDuration, arcFadeDelay } = arc;
-
-  if (age < 0) return 0;
-  if (age <= arcDuration + arcFadeDelay) return 1;
-
-  const fadeOut = (age - arcDuration - arcFadeDelay) / 500;
-  return Math.max(0, 1 - fadeOut);
+// Pre-compute bezier curve waypoints for an arc (cached on arc object to avoid per-frame recompute)
+function computeArcWaypoints(arc) {
+  if (arc._tripWaypoints) return arc._tripWaypoints;
+  const { customerLng, customerLat, proLng, proLat, arcDuration, emittedAt } = arc;
+  const dLng = proLng - customerLng;
+  const dLat = proLat - customerLat;
+  const dist = Math.sqrt(dLng * dLng + dLat * dLat) || 1e-9;
+  const elevate = dist * 0.35;
+  // Control point: midpoint offset perpendicular to source→dest vector
+  const ctrlLng = (customerLng + proLng) / 2 - (dLat / dist) * elevate;
+  const ctrlLat = (customerLat + proLat) / 2 + (dLng / dist) * elevate;
+  const N = 20;
+  const path = [];
+  const timestamps = [];
+  for (let i = 0; i < N; i++) {
+    const t = i / (N - 1);
+    path.push([
+      (1 - t) * (1 - t) * customerLng + 2 * (1 - t) * t * ctrlLng + t * t * proLng,
+      (1 - t) * (1 - t) * customerLat + 2 * (1 - t) * t * ctrlLat + t * t * proLat,
+    ]);
+    timestamps.push(emittedAt + t * arcDuration);
+  }
+  arc._tripWaypoints = { path, timestamps };
+  return arc._tripWaypoints;
 }
 
 // ── Pulse helpers ──────────────────────────────────────────────────────────
 
-const PULSE_DURATION = 1200; // ms each pulse lasts
+const PULSE_DURATION = 1200;
 
-// Source pulse: radiates when arc first appears (age 0)
 function sourcePulseRadius(arc, virtualTime) {
   const age = virtualTime - arc.emittedAt;
   if (age < 0 || age > PULSE_DURATION) return 0;
@@ -71,7 +58,6 @@ function sourcePulseAlpha(arc, virtualTime) {
   return Math.round((1 - age / PULSE_DURATION) * 220);
 }
 
-// Destination pulse: radiates when the line arrives (age = arcDuration)
 function destPulseRadius(arc, virtualTime) {
   const age = virtualTime - arc.emittedAt;
   const t = age - arc.arcDuration;
@@ -86,59 +72,38 @@ function destPulseAlpha(arc, virtualTime) {
 }
 
 export function buildLayers(activeArcs, virtualTime) {
-  const { ArcLayer, ScatterplotLayer } = deck;
+  const { TripsLayer, ScatterplotLayer } = deck;
 
-  const HEIGHT = d => {
-    const crossesBosphorus = (d.customerLng < 28.97) !== (d.proLng < 28.97);
-    return crossesBosphorus ? 1.0 : 0.35;
-  };
-
-  // Main arc layer — positions animated each frame
-  const arcLayer = new ArcLayer({
-    id: 'arcs',
+  // Main arc — comet draws source→dest, comet tail fades as it erases
+  const tripsLayer = new TripsLayer({
+    id: 'arcs-trips',
     data: activeArcs,
-    getSourcePosition: d => arcSourcePos(d, virtualTime),
-    getTargetPosition: d => arcTargetPos(d, virtualTime),
-    getSourceColor: d => {
+    getPath: d => computeArcWaypoints(d).path,
+    getTimestamps: d => computeArcWaypoints(d).timestamps,
+    getColor: d => {
       const col = categoryColor(d.serviceCategory, 'source');
-      return [...col, Math.round(arcOpacity(d, virtualTime) * 220)];
+      return [...col, 220];
     },
-    getTargetColor: d => {
-      const col = categoryColor(d.serviceCategory, 'target');
-      return [...col, Math.round(arcOpacity(d, virtualTime) * 220)];
-    },
-    getWidth: 3,
-    getHeight: HEIGHT,
-    updateTriggers: {
-      getSourcePosition: virtualTime,
-      getTargetPosition: virtualTime,
-      getSourceColor: virtualTime,
-      getTargetColor: virtualTime,
-    },
+    currentTime: virtualTime,
+    trailLength: TRAIL_LENGTH,
+    widthMinPixels: 3,
+    fadeTrail: true,
   });
 
   // Glow layer
-  const glowLayer = new ArcLayer({
-    id: 'arcs-glow',
+  const glowLayer = new TripsLayer({
+    id: 'arcs-trips-glow',
     data: activeArcs,
-    getSourcePosition: d => arcSourcePos(d, virtualTime),
-    getTargetPosition: d => arcTargetPos(d, virtualTime),
-    getSourceColor: d => {
+    getPath: d => computeArcWaypoints(d).path,
+    getTimestamps: d => computeArcWaypoints(d).timestamps,
+    getColor: d => {
       const col = categoryColor(d.serviceCategory, 'source');
-      return [...col, Math.round(arcOpacity(d, virtualTime) * 45)];
+      return [...col, 40];
     },
-    getTargetColor: d => {
-      const col = categoryColor(d.serviceCategory, 'target');
-      return [...col, Math.round(arcOpacity(d, virtualTime) * 45)];
-    },
-    getWidth: 12,
-    getHeight: HEIGHT,
-    updateTriggers: {
-      getSourcePosition: virtualTime,
-      getTargetPosition: virtualTime,
-      getSourceColor: virtualTime,
-      getTargetColor: virtualTime,
-    },
+    currentTime: virtualTime,
+    trailLength: TRAIL_LENGTH,
+    widthMinPixels: 10,
+    fadeTrail: true,
   });
 
   // Source pulse — radiates when arc starts
@@ -152,10 +117,7 @@ export function buildLayers(activeArcs, virtualTime) {
       return [...col, sourcePulseAlpha(d, virtualTime)];
     },
     radiusUnits: 'pixels',
-    updateTriggers: {
-      getRadius: virtualTime,
-      getFillColor: virtualTime,
-    },
+    updateTriggers: { getRadius: virtualTime, getFillColor: virtualTime },
   });
 
   // Destination pulse — radiates when line arrives
@@ -169,10 +131,7 @@ export function buildLayers(activeArcs, virtualTime) {
       return [...col, destPulseAlpha(d, virtualTime)];
     },
     radiusUnits: 'pixels',
-    updateTriggers: {
-      getRadius: virtualTime,
-      getFillColor: virtualTime,
-    },
+    updateTriggers: { getRadius: virtualTime, getFillColor: virtualTime },
   });
 
   // Static origin dot at customer location
@@ -181,15 +140,9 @@ export function buildLayers(activeArcs, virtualTime) {
     data: activeArcs,
     getPosition: d => [d.customerLng, d.customerLat],
     getRadius: 5,
-    getFillColor: d => {
-      const col = categoryColor(d.serviceCategory, 'source');
-      return [...col, Math.round(arcOpacity(d, virtualTime) * 200)];
-    },
+    getFillColor: d => [...categoryColor(d.serviceCategory, 'source'), 180],
     radiusUnits: 'pixels',
-    updateTriggers: {
-      getFillColor: virtualTime,
-    },
   });
 
-  return [glowLayer, arcLayer, originLayer, sourcePulseLayer, destPulseLayer];
+  return [glowLayer, tripsLayer, originLayer, sourcePulseLayer, destPulseLayer];
 }

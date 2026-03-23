@@ -133,7 +133,7 @@ export class Playback {
     // Cull expired arcs
     this.activeArcs = this.activeArcs.filter(arc => {
       const age = this.virtualTime - arc.emittedAt;
-      return age < arc.arcDuration + arc.arcFadeDelay + 600;
+      return age < arc.arcDuration * 2 + arc.arcFadeDelay + 200;
     });
 
     this._renderFrame(this.virtualTime);
