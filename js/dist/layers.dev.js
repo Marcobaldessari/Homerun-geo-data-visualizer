@@ -22,7 +22,7 @@ var COMET_WIDTH_PX = 5; // core line thickness in pixels
 
 var COMET_ALPHA = 220; // core brightness (0–255)
 
-var TRAIL_LENGTH = 400; // tail length in ms — shorter = faster fade-out
+var TRAIL_LENGTH = 1100; // tail length in ms — shorter = faster fade-out
 //   also controls how much of the arc is visible at once
 // ── Glow ───────────────────────────────────────────────────────────────────
 

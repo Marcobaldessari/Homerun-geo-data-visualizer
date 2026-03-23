@@ -5,7 +5,7 @@
 // ── Comet ──────────────────────────────────────────────────────────────────
 const COMET_WIDTH_PX = 5; // core line thickness in pixels
 const COMET_ALPHA = 220; // core brightness (0–255)
-const TRAIL_LENGTH = 400; // tail length in ms — shorter = faster fade-out
+const TRAIL_LENGTH = 1100; // tail length in ms — shorter = faster fade-out
 //   also controls how much of the arc is visible at once
 
 // ── Glow ───────────────────────────────────────────────────────────────────
