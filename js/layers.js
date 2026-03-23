@@ -146,15 +146,5 @@ export function buildLayers(activeArcs, virtualTime) {
     updateTriggers: { getRadius: virtualTime, getLineColor: virtualTime },
   });
 
-  // Static origin dot at customer location
-  const originLayer = new ScatterplotLayer({
-    id: 'origin-dots',
-    data: activeArcs,
-    getPosition: d => [d.customerLng, d.customerLat],
-    getRadius: 5,
-    getFillColor: d => [...categoryColor(d.serviceCategory, 'source'), 180],
-    radiusUnits: 'pixels',
-  });
-
-  return [glowLayer, tripsLayer, originLayer, sourcePulseLayer, destPulseLayer];
+  return [glowLayer, tripsLayer, sourcePulseLayer, destPulseLayer];
 }
