@@ -2,61 +2,65 @@
 // 1000 job requests (all service categories) + 17 real customer reviews
 // Coordinates are district centroids from ANALYTICS.TBLAREALEVEL2
 
-const SERVICE_CATEGORY_MAP_MILANO = {
-  'Impresa di Pulizie': 'cleaning',
-  'Pulizie Domestiche': 'cleaning',
-  'Pulizie per Traslochi': 'cleaning',
-  'Pulizie Post Cantiere': 'cleaning',
-  'Lavaggio Tappeti': 'cleaning',
-  'Lavaggio Divani': 'cleaning',
-  'Pulizia Grondaie': 'cleaning',
-  'Pulizia Vetri': 'cleaning',
-  'Imbiancatura': 'repair',
-  'Imbianchino': 'repair',
-  'Posa Carta da Parati': 'repair',
-  'Riparazione Infissi': 'repair',
-  'Riparazione Perdite Acqua': 'repair',
-  'Riparazione Lavastoviglie': 'repair',
-  'Riparazione Stampanti': 'repair',
-  'Installazione Termostato': 'repair',
-  'Installazione Faretti': 'repair',
-  'Installazione Condizionatori': 'repair',
-  'Installazione Lavastoviglie': 'repair',
-  'Manutenzione Impianto Irrigazione': 'repair',
-  'Soppalchi': 'repair',
-  'Revisione Caldaia': 'repair',
-  'Elettricista': 'repair',
-  'Idraulico': 'repair',
-  'Muratore': 'repair',
-  'Riparazione Lavatrice': 'repair',
-  'Riparazione Frigorifero': 'repair',
-  'Falegname': 'repair',
-  'Serraturista': 'repair',
-  'Tinteggiatura': 'repair',
-  'Gessatura': 'repair',
-  'Piastrellista': 'repair',
-  'Riparazione Tapparelle': 'repair',
-  'Manutenzione Giardino': 'beauty',
-  'Parrucchiere': 'beauty',
-  'Estetista': 'beauty',
-  'Massaggiatore': 'beauty',
-  'Trucco Sposa': 'beauty',
-  'Manicure': 'beauty',
-  'Trasloco': 'moving',
-  'Noleggio Pulmino con Autista': 'moving',
-  'Trasporto Merci': 'moving',
-  'Autista Privato': 'moving',
-  'Servizio di Facchinaggio': 'moving',
-  'Ripetizioni': 'education',
-  'Insegnante di Musica': 'education',
-  'Personal Trainer': 'education',
-  'Istruttore di Nuoto': 'education',
-  'Organizzazione Feste': 'events',
-  'Catering': 'events',
-  'Fotografo': 'events',
-  'Animatore': 'events',
-  'DJ': 'events',
-};
+function getCategoryMilano(service) {
+  const n = service.toLowerCase();
+  // Cleaning
+  if (n.includes('pulizia') || n.includes('pulizie') || n.includes('lavaggio') ||
+      n.includes('domestica') || n.includes('donna delle'))               return 'cleaning';
+  // Moving / removal / logistics
+  if (n.includes('traslo')   || n.includes('trasporto') || n.includes('facchinaggio') ||
+      n.includes('autista')  || n.includes('taxi')      || n.includes('ncc') ||
+      n.includes('transfer') || n.includes('sgombero')  || n.includes('svuota') ||
+      n.includes('smaltimento') || n.includes('self storage') ||
+      n.includes('noleggio pulmino') || n.includes('noleggio auto'))      return 'moving';
+  // Education / training (incl. dog training)
+  if (n.includes('addestramento') || n.includes('educatore cinofilo'))    return 'education';
+  // Beauty / wellness / personal care
+  if (n.includes('massaggio') || n.includes('massaggi') || n.includes('parrucchiere') ||
+      n.includes('estetista') || n.includes('manicure') || n.includes('pedicure') ||
+      n.includes('trucco')    || n.includes('ciglia')   || n.includes('unghie') ||
+      n.includes('elettrocoagul'))                                        return 'beauty';
+  // Education
+  if (n.includes('ripetizioni') || n.includes('lezioni') || n.includes('corso') ||
+      n.includes('corsi') || n.includes('personal trainer') ||
+      n.includes('istruttore') || n.includes('insegnante'))               return 'education';
+  // Events
+  if (n.includes('organizzazione') || n.includes('catering') ||
+      n.includes('fotografo') || n.includes('animatore') || n.includes('dj') ||
+      n.includes('fiorista')  || n.includes('matrimonio') ||
+      n.includes('video eventi') || n.includes('video musicale') ||
+      n.includes('location')  || n.includes('sale per') ||
+      n.includes('book fotografico') || n.includes('servizio fotografico'))return 'events';
+  // Repair / home improvement / trades (broad catch-all for craft services)
+  if (n.includes('riparazione') || n.includes('installazione') || n.includes('montaggio') ||
+      n.includes('manutenzione') || n.includes('elettricista') || n.includes('idraulico') ||
+      n.includes('muratore')  || n.includes('imbiancatura') || n.includes('imbianchino') ||
+      n.includes('falegname') || n.includes('cartongess')   || n.includes('fabbro') ||
+      n.includes('impianto')  || n.includes('antennista')   || n.includes('posa ') ||
+      n.includes('lamatura')  || n.includes('levigatura')   || n.includes('lucidatura') ||
+      n.includes('ristrutturazione') || n.includes('rifacimento') ||
+      n.includes('sostituzione') || n.includes('rasatura')  || n.includes('verniciatura') ||
+      n.includes('vetrai')    || n.includes('meccanico')    || n.includes('caldaia') ||
+      n.includes('levabolli') || n.includes('stufa')        || n.includes('box doccia') ||
+      n.includes('zanzariera') || n.includes('tapparelle')  || n.includes('infissi') ||
+      n.includes('serrament') || n.includes('parquet')      || n.includes('pavimento') ||
+      n.includes('piastrellista') || n.includes('rimozione') ||
+      n.includes('impresa edile') || n.includes('potatura') || n.includes('taglio ') ||
+      n.includes('giardini')  || n.includes('giardino')     || n.includes('prato') ||
+      n.includes('tende')     || n.includes('soppalc')      || n.includes('tuttofare') ||
+      n.includes('pitturare') || n.includes('tinteggiatura') ||
+      n.includes('restauro')   || n.includes('adattamento')  || n.includes('noleggio') ||
+      n.includes('serraturista') || n.includes('gessatura') || n.includes('certificazione') ||
+      n.includes('sturare')    || n.includes('su misura')    || n.includes('carrozziere') ||
+      n.includes('tappezziere') || n.includes('tappezzare') || n.includes('rifoderare') ||
+      n.includes('veneziane')  || n.includes('controsoffitto') ||
+      n.includes('cabina armadio') || n.includes('cappa') ||
+      n.includes('cambiare')   || n.includes('cambio')     || n.includes('geometra') ||
+      n.includes('disinfestazione') || n.includes('revisione') ||
+      n.includes('videoispezione') || n.includes('zanzariere') ||
+      n.includes('rendering')  || n.includes('interior design'))          return 'repair';
+  return 'other';
+}
 
 const RAW_JOBS_MILANO = [
   { id: 52521384, lat: 45.58401, lng: 9.27301, ts: "2026-03-21T00:21:31.697+03:00", service: 'Meccanico Moto' },
@@ -559,7 +563,7 @@ function buildMilanoEvents() {
   const SIM_DUR = 600000;
   const events = allRaw.map(e => {
     const tNorm = Math.round(((new Date(e.ts).getTime() - t0) / span) * SIM_DUR);
-    const cat = SERVICE_CATEGORY_MAP_MILANO[e.service] || 'other';
+    const cat = getCategoryMilano(e.service);
     if (e.type === 'job') {
       const pos = proPosition_milano(e.id, e.lat, e.lng);
       return {
