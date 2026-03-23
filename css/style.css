@@ -6,6 +6,7 @@ body {
   overflow: hidden;
   width: 100vw;
   height: 100vh;
+  touch-action: none; /* prevent page scroll/zoom on touch */
 }
 
 /* ── Map ── */

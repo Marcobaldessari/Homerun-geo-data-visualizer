@@ -68,6 +68,31 @@ export function initMap() {
     canvas.style.cursor = 'grab';
   });
 
+  // Touch: single finger drag → rotate bearing + pitch (same as mouse)
+  canvas.addEventListener('touchstart', e => {
+    e.preventDefault();
+    if (e.touches.length === 1) {
+      rotating = true;
+      lastX = e.touches[0].clientX;
+      lastY = e.touches[0].clientY;
+    }
+  }, { passive: false });
+
+  window.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!rotating || e.touches.length !== 1) return;
+    const dx = e.touches[0].clientX - lastX;
+    const dy = e.touches[0].clientY - lastY;
+    lastX = e.touches[0].clientX;
+    lastY = e.touches[0].clientY;
+    map.setBearing(map.getBearing() + dx * 0.4);
+    map.setPitch(Math.max(0, Math.min(80, map.getPitch() - dy * 0.3)));
+  }, { passive: false });
+
+  window.addEventListener('touchend', () => {
+    rotating = false;
+  });
+
   canvas.style.cursor = 'grab';
 
   return map;
