@@ -1,3 +1,9 @@
+// ── Zoom limits ────────────────────────────────────────────────────────────
+const MIN_ZOOM_DESKTOP = 9;
+const MIN_ZOOM_MOBILE  = 7;
+const MAX_ZOOM_DESKTOP = 14;
+const MAX_ZOOM_MOBILE  = 14;
+
 export function initMap() {
   const isMobile = window.innerWidth <= 768;
 
@@ -30,8 +36,8 @@ export function initMap() {
     },
     center: [28.97, 41.01], // Istanbul
     zoom: isMobile ? 9 : 11,
-    minZoom: 9,
-    maxZoom: 14,
+    minZoom: isMobile ? MIN_ZOOM_MOBILE  : MIN_ZOOM_DESKTOP,
+    maxZoom: isMobile ? MAX_ZOOM_MOBILE  : MAX_ZOOM_DESKTOP,
     pitch: 45,
     bearing: 0,
     antialias: true,
