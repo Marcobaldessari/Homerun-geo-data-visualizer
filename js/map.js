@@ -42,19 +42,19 @@ export function initMap() {
   map.scrollZoom.disable();
   map.touchZoomRotate.disable();
 
-  // Helper: clamp zoom within map limits and ease to it (always around map centre)
-  function zoomTo(newZoom) {
-    map.easeTo({ zoom: Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), newZoom)), duration: 120 });
+  // Clamp zoom to map limits
+  function clampZoom(z) {
+    return Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), z));
   }
 
-  // Desktop scroll → centre-anchored zoom
+  // Desktop scroll → centre-anchored zoom with brief easing
   const canvas = map.getCanvas();
   canvas.addEventListener('wheel', e => {
     e.preventDefault();
     let delta = e.deltaY;
     if (e.deltaMode === 1) delta *= 30;
     if (e.deltaMode === 2) delta *= 300;
-    zoomTo(map.getZoom() - delta / 300);
+    map.easeTo({ zoom: clampZoom(map.getZoom() - delta / 300), duration: 120 });
   }, { passive: false });
 
   // Left-drag → rotate bearing + adjust pitch
@@ -108,7 +108,7 @@ export function initMap() {
       const dx = e.touches[1].clientX - e.touches[0].clientX;
       const dy = e.touches[1].clientY - e.touches[0].clientY;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      if (lastPinchDist > 0) zoomTo(map.getZoom() + Math.log2(dist / lastPinchDist));
+      if (lastPinchDist > 0) map.setZoom(clampZoom(map.getZoom() + Math.log2(dist / lastPinchDist)));
       lastPinchDist = dist;
       return;
     }
