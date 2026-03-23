@@ -524,11 +524,27 @@ const RAW_REVIEWS_MILANO = [
   { id: 3357939, lat: 45.43203, lng: 9.3123, ts: "2026-03-21T23:31:13.437+03:00", rating: 5, reviewText: `Ottimo intervento, puntuali, precisi. Consigliato!`, service: 'Revisione Caldaia' },
 ];
 
-function proOffset_milano(jobId) {
-  const h = ((jobId * 2654435761) >>> 0);
-  const dlat = ((h & 0xFF) - 128) * 0.00035;
-  const dlng = (((h >> 8) & 0xFF) - 128) * 0.00045;
-  return { dlat, dlng };
+const DISTRICT_CENTROIDS_MILANO = (() => {
+  const seen = new Set();
+  const out = [];
+  for (const j of RAW_JOBS_MILANO) {
+    const key = `${j.lat},${j.lng}`;
+    if (!seen.has(key)) { seen.add(key); out.push({ lat: j.lat, lng: j.lng }); }
+  }
+  return out;
+})();
+
+function proPosition_milano(jobId, customerLat, customerLng) {
+  const n = DISTRICT_CENTROIDS_MILANO.length;
+  let idx = ((jobId * 2654435761) >>> 0) % n;
+  if (DISTRICT_CENTROIDS_MILANO[idx].lat === customerLat && DISTRICT_CENTROIDS_MILANO[idx].lng === customerLng) {
+    idx = (idx + 1) % n;
+  }
+  const d = DISTRICT_CENTROIDS_MILANO[idx];
+  const h2 = ((jobId * 1234567891) >>> 0);
+  const dlat = ((h2 & 0xFF) - 128) * 0.000055;
+  const dlng = (((h2 >> 8) & 0xFF) - 128) * 0.000055;
+  return { lat: d.lat + dlat, lng: d.lng + dlng };
 }
 
 function buildMilanoEvents() {
@@ -545,11 +561,11 @@ function buildMilanoEvents() {
     const tNorm = Math.round(((new Date(e.ts).getTime() - t0) / span) * SIM_DUR);
     const cat = SERVICE_CATEGORY_MAP_MILANO[e.service] || 'other';
     if (e.type === 'job') {
-      const { dlat, dlng } = proOffset_milano(e.id);
+      const pos = proPosition_milano(e.id, e.lat, e.lng);
       return {
         id: `job_${e.id}`, type: 'job', timestamp: tNorm,
         customerLat: e.lat, customerLng: e.lng,
-        proLat: e.lat + dlat, proLng: e.lng + dlng,
+        proLat: pos.lat, proLng: pos.lng,
         serviceName: e.service, serviceCategory: cat,
         arcDuration: 2500, arcFadeDelay: 4000,
       };

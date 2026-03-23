@@ -58,13 +58,6 @@ function getCategory(name) {
   return 'other';
 }
 
-function proOffset(jobId) {
-  const h = ((jobId * 2654435761) >>> 0);
-  const dlat = ((h & 0xFF) - 128) * 0.00035;
-  const dlng = (((h >> 8) & 0xFF) - 128) * 0.00045;
-  return { dlat, dlng };
-}
-
 const RAW_JOBS = [
   { id: 52521144, lat: 41.03707, lng: 28.88516, ts: "2026-03-21T00:00:03.627+03:00", service: "SRC Belgesi" },
   { id: 52521145, lat: 41.13178, lng: 29.04168, ts: "2026-03-21T00:00:16.887+03:00", service: "Parti Evi" },
@@ -1068,6 +1061,31 @@ const RAW_JOBS = [
   { id: 52525306, lat: 41.0093, lng: 29.2155, ts: "2026-03-21T12:37:01.963+03:00", service: "Evden Eve Nakliyat" },
 ];
 
+// Unique district centroids derived from job data — guaranteed on land
+const DISTRICT_CENTROIDS = (() => {
+  const seen = new Set();
+  const out = [];
+  for (const j of RAW_JOBS) {
+    const key = `${j.lat},${j.lng}`;
+    if (!seen.has(key)) { seen.add(key); out.push({ lat: j.lat, lng: j.lng }); }
+  }
+  return out;
+})();
+
+// Pick a pro district centroid + small jitter (±~700m), different from customer's district
+function proPosition(jobId, customerLat, customerLng) {
+  const n = DISTRICT_CENTROIDS.length;
+  let idx = ((jobId * 2654435761) >>> 0) % n;
+  if (DISTRICT_CENTROIDS[idx].lat === customerLat && DISTRICT_CENTROIDS[idx].lng === customerLng) {
+    idx = (idx + 1) % n;
+  }
+  const d = DISTRICT_CENTROIDS[idx];
+  const h2 = ((jobId * 1234567891) >>> 0);
+  const dlat = ((h2 & 0xFF) - 128) * 0.000055;        // ±0.007°  ≈ ±700m
+  const dlng = (((h2 >> 8) & 0xFF) - 128) * 0.000055;
+  return { lat: d.lat + dlat, lng: d.lng + dlng };
+}
+
 const RAW_REVIEWS = [
   { id: 3357301, lat: 41.05232, lng: 28.99085, ts: '2026-03-21T00:10:03.183+03:00', rating: 5, service: 'Şan Dersi', text: 'İnanılmaz nazik ve yardımcı, harika bilgili bir öğretmen' },
   { id: 3357306, lat: 40.94083, lng: 29.11585, ts: '2026-03-21T00:30:26.207+03:00', rating: 5, service: 'Avize Montaj', text: 'Titiz çalışması ve işini severek yapması hoşuma gitti. İletişimi de gayet güzel.' },
@@ -1132,15 +1150,15 @@ function buildEvents() {
     const category  = getCategory(e.service);
 
     if (e.type === 'job') {
-      const { dlat, dlng } = proOffset(e.id);
+      const pos = proPosition(e.id, e.lat, e.lng);
       events.push({
         id:              'job_' + e.id,
         type:            'job',
         timestamp,
         customerLat:     e.lat,
         customerLng:     e.lng,
-        proLat:          e.lat + dlat,
-        proLng:          e.lng + dlng,
+        proLat:          pos.lat,
+        proLng:          pos.lng,
         serviceName:     e.service,
         serviceCategory: category,
         proName:         '',
