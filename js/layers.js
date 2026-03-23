@@ -88,6 +88,7 @@ export function buildLayers(activeArcs, virtualTime) {
       const col = categoryColor(d.serviceCategory, 'source');
       return [...col, 220];
     },
+    positionFormat: 'XYZ',
     currentTime: virtualTime,
     trailLength: TRAIL_LENGTH,
     widthMinPixels: 3,
@@ -104,6 +105,7 @@ export function buildLayers(activeArcs, virtualTime) {
       const col = categoryColor(d.serviceCategory, 'source');
       return [...col, 40];
     },
+    positionFormat: 'XYZ',
     currentTime: virtualTime,
     trailLength: TRAIL_LENGTH,
     widthMinPixels: 10,
