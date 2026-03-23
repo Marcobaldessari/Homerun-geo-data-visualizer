@@ -88,7 +88,7 @@ export class Playback {
     this.activeArcs = [];
     this.eventPointer = 0;
     this.onSeek(this.virtualTime);
-    const FADE_OUT_BUFFER = 8000; // ms: keep arcs that started within this window
+    const FADE_OUT_BUFFER = 2000; // ms: keep arcs that started within this window
 
     for (let i = 0; i < this.events.length; i++) {
       const ev = this.events[i];
@@ -96,7 +96,7 @@ export class Playback {
       this.eventPointer = i + 1;
 
       if (ev.type === 'job') {
-        const endTime = ev.timestamp + ev.arcDuration + ev.arcFadeDelay + 500;
+        const endTime = ev.timestamp + ev.arcDuration + 500;
         if (endTime >= this.virtualTime - FADE_OUT_BUFFER) {
           this.activeArcs.push({ ...ev, emittedAt: ev.timestamp });
         }
@@ -133,7 +133,7 @@ export class Playback {
     // Cull expired arcs
     this.activeArcs = this.activeArcs.filter(arc => {
       const age = this.virtualTime - arc.emittedAt;
-      return age < arc.arcDuration * 2 + arc.arcFadeDelay + 200;
+      return age < arc.arcDuration + 1500;
     });
 
     this._renderFrame(this.virtualTime);

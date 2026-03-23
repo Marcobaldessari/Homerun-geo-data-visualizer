@@ -567,7 +567,7 @@ function buildMilanoEvents() {
         customerLat: e.lat, customerLng: e.lng,
         proLat: pos.lat, proLng: pos.lng,
         serviceName: e.service, serviceCategory: cat,
-        arcDuration: 2500, arcFadeDelay: 4000,
+        arcDuration: 1200, arcFadeDelay: 0,
       };
     } else {
       return {

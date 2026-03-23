@@ -15,7 +15,7 @@ function categoryColor(category, type) {
 }
 
 // trailLength = arcDuration + arcFadeDelay keeps the full arc in the window during hold
-const TRAIL_LENGTH = 6500;
+const TRAIL_LENGTH = 400;
 
 // Pre-compute bezier curve waypoints for an arc (cached on arc object to avoid per-frame recompute)
 function computeArcWaypoints(arc) {
@@ -42,12 +42,15 @@ function computeArcWaypoints(arc) {
 
 // ── Pulse helpers ──────────────────────────────────────────────────────────
 
-const PULSE_DURATION = 1200;
+const PULSE_DURATION = 1000;
+
+// Quintic ease-out: fast start, decelerates sharply at the end
+function easeOutQuint(t) { return 1 - Math.pow(1 - t, 5); }
 
 function sourcePulseRadius(arc, virtualTime) {
   const age = virtualTime - arc.emittedAt;
   if (age < 0 || age > PULSE_DURATION) return 0;
-  return 6 + (age / PULSE_DURATION) * 28;
+  return 4 + easeOutQuint(age / PULSE_DURATION) * 32;
 }
 function sourcePulseAlpha(arc, virtualTime) {
   const age = virtualTime - arc.emittedAt;
@@ -59,7 +62,7 @@ function destPulseRadius(arc, virtualTime) {
   const age = virtualTime - arc.emittedAt;
   const t = age - arc.arcDuration;
   if (t < 0 || t > PULSE_DURATION) return 0;
-  return 6 + (t / PULSE_DURATION) * 28;
+  return 4 + easeOutQuint(t / PULSE_DURATION) * 32;
 }
 function destPulseAlpha(arc, virtualTime) {
   const age = virtualTime - arc.emittedAt;
@@ -105,32 +108,42 @@ export function buildLayers(activeArcs, virtualTime) {
     fadeTrail: true,
   });
 
-  // Source pulse — radiates when arc starts
+  // Source pulse — radiates when arc starts (outline ring, no fill)
   const sourcePulseLayer = new ScatterplotLayer({
     id: 'source-pulse',
     data: activeArcs,
     getPosition: d => [d.customerLng, d.customerLat],
     getRadius: d => sourcePulseRadius(d, virtualTime),
-    getFillColor: d => {
+    getFillColor: [0, 0, 0, 0],
+    getLineColor: d => {
       const col = categoryColor(d.serviceCategory, 'source');
       return [...col, sourcePulseAlpha(d, virtualTime)];
     },
+    stroked: true,
+    filled: false,
+    getLineWidth: 1.5,
+    lineWidthUnits: 'pixels',
     radiusUnits: 'pixels',
-    updateTriggers: { getRadius: virtualTime, getFillColor: virtualTime },
+    updateTriggers: { getRadius: virtualTime, getLineColor: virtualTime },
   });
 
-  // Destination pulse — radiates when line arrives
+  // Destination pulse — radiates when line arrives (outline ring, no fill)
   const destPulseLayer = new ScatterplotLayer({
     id: 'dest-pulse',
     data: activeArcs,
     getPosition: d => [d.proLng, d.proLat],
     getRadius: d => destPulseRadius(d, virtualTime),
-    getFillColor: d => {
+    getFillColor: [0, 0, 0, 0],
+    getLineColor: d => {
       const col = categoryColor(d.serviceCategory, 'target');
       return [...col, destPulseAlpha(d, virtualTime)];
     },
+    stroked: true,
+    filled: false,
+    getLineWidth: 1.5,
+    lineWidthUnits: 'pixels',
     radiusUnits: 'pixels',
-    updateTriggers: { getRadius: virtualTime, getFillColor: virtualTime },
+    updateTriggers: { getRadius: virtualTime, getLineColor: virtualTime },
   });
 
   // Static origin dot at customer location

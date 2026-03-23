@@ -1162,8 +1162,8 @@ function buildEvents() {
         serviceName:     e.service,
         serviceCategory: category,
         proName:         '',
-        arcDuration:     1800,
-        arcFadeDelay:    4000,
+        arcDuration:     1200,
+        arcFadeDelay:    0,
       });
     } else {
       events.push({
