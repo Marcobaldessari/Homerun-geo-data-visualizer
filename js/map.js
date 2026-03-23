@@ -60,7 +60,7 @@ export function initMap() {
     let delta = e.deltaY;
     if (e.deltaMode === 1) delta *= 30;
     if (e.deltaMode === 2) delta *= 300;
-    map.setZoom(clampZoom(map.getZoom() - delta / 150));
+    map.setZoom(clampZoom(map.getZoom() - delta / 220));
   }, { passive: false });
 
   // Left-drag → rotate bearing + adjust pitch
