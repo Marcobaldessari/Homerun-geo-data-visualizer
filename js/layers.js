@@ -29,7 +29,7 @@ function computeArcWaypoints(arc) {
   const ctrlLng = (customerLng + proLng) / 2 - (dLat / dist) * elevate;
   const ctrlLat = (customerLat + proLat) / 2 + (dLng / dist) * elevate;
   // Arc peak altitude in metres — fixed so arcs always arch visibly at city scale
-  const MAX_ALT_M = 2000;
+  const MAX_ALT_M = 1400;
   const N = 20;
   const path = [];
   const timestamps = [];
