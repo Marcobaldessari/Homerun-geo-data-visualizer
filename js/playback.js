@@ -11,7 +11,7 @@ export class Playback {
     this.onSeek = onSeek || (() => {});
 
     this.isPlaying = false;
-    this.speedFactor = 6;
+    this.speedFactor = 1;
     this.virtualTime = 0;    // current simulated ms
     this.wallStart = null;   // wall clock when play was last pressed
     this.pausedAt = 0;       // virtualTime at last pause

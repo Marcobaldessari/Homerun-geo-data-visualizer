@@ -28,10 +28,47 @@ export function initMap() {
     },
     center: [28.97, 41.01], // Istanbul
     zoom: 11,
+    minZoom: 9,
+    maxZoom: 14,
     pitch: 45,
     bearing: 0,
     antialias: true,
   });
+
+  // Disable panning — camera is fixed in X/Y
+  map.dragPan.disable();
+
+  // Remap left-drag → rotate bearing + adjust pitch
+  const canvas = map.getCanvas();
+  let rotating = false;
+  let lastX = 0;
+  let lastY = 0;
+
+  canvas.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    rotating = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    canvas.style.cursor = 'grabbing';
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (!rotating) return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    map.setBearing(map.getBearing() + dx * 0.4);
+    map.setPitch(Math.max(0, Math.min(80, map.getPitch() + dy * 0.3)));
+  });
+
+  window.addEventListener('mouseup', e => {
+    if (e.button !== 0) return;
+    rotating = false;
+    canvas.style.cursor = 'grab';
+  });
+
+  canvas.style.cursor = 'grab';
 
   return map;
 }
