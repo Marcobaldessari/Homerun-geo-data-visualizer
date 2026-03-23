@@ -557,7 +557,7 @@ function buildMilanoEvents() {
   const tEnd = new Date(allRaw[allRaw.length - 1].ts).getTime();
   const span = tEnd - t0;
   const SIM_DUR = 600000;
-  return allRaw.map(e => {
+  const events = allRaw.map(e => {
     const tNorm = Math.round(((new Date(e.ts).getTime() - t0) / span) * SIM_DUR);
     const cat = SERVICE_CATEGORY_MAP_MILANO[e.service] || 'other';
     if (e.type === 'job') {
@@ -579,9 +579,13 @@ function buildMilanoEvents() {
       };
     }
   });
+  return { events, simStart: t0, simEnd: tEnd };
 }
 
-export const MILANO_EVENTS = buildMilanoEvents();
+const _milano = buildMilanoEvents();
+export const MILANO_EVENTS       = _milano.events;
 export const MILANO_SIM_DURATION = 600000;
-export const MILANO_CENTER = [9.18716, 45.47271];
+export const MILANO_SIM_START    = _milano.simStart;
+export const MILANO_SIM_END      = _milano.simEnd;
+export const MILANO_CENTER       = [9.18716, 45.47271];
 export const MILANO_ZOOM = 11;

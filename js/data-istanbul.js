@@ -1182,14 +1182,17 @@ function buildEvents() {
     }
   }
 
-  return events;
+  return { events, simStart: t0, simEnd: tEnd };
 }
 
-export const EVENTS = buildEvents();
-export const SIM_DURATION = 600000;
+const _istanbul = buildEvents();
+export const EVENTS                = _istanbul.events;
+export const SIM_DURATION          = 600000;
 
 // Named exports for city-switching
-export const ISTANBUL_EVENTS = EVENTS;
+export const ISTANBUL_EVENTS       = _istanbul.events;
 export const ISTANBUL_SIM_DURATION = SIM_DURATION;
-export const ISTANBUL_CENTER = [28.97, 41.01];
-export const ISTANBUL_ZOOM = 11;
+export const ISTANBUL_SIM_START    = _istanbul.simStart;
+export const ISTANBUL_SIM_END      = _istanbul.simEnd;
+export const ISTANBUL_CENTER       = [28.97, 41.01];
+export const ISTANBUL_ZOOM         = 11;

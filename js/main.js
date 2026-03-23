@@ -3,14 +3,14 @@ import { buildLayers }      from './layers.js';
 import { Playback }         from './playback.js';
 import { emitReviewCard, updateReviewCards, clearReviewCards } from './reviews.js';
 import { incrementJobs, incrementReviews, resetStats } from './stats.js';
-import { ISTANBUL_EVENTS, ISTANBUL_SIM_DURATION, ISTANBUL_CENTER, ISTANBUL_ZOOM } from './data-istanbul.js';
-import { MILANO_EVENTS, MILANO_SIM_DURATION, MILANO_CENTER, MILANO_ZOOM } from './data-milano.js';
+import { ISTANBUL_EVENTS, ISTANBUL_SIM_DURATION, ISTANBUL_SIM_START, ISTANBUL_SIM_END, ISTANBUL_CENTER, ISTANBUL_ZOOM } from './data-istanbul.js';
+import { MILANO_EVENTS, MILANO_SIM_DURATION, MILANO_SIM_START, MILANO_SIM_END, MILANO_CENTER, MILANO_ZOOM } from './data-milano.js';
 
 const isMobile = window.innerWidth <= 768;
 
 const CITIES = {
-  istanbul: { events: ISTANBUL_EVENTS, simDuration: ISTANBUL_SIM_DURATION, center: ISTANBUL_CENTER, zoom: isMobile ? 9 : ISTANBUL_ZOOM, label: 'Istanbul' },
-  milano:   { events: MILANO_EVENTS,   simDuration: MILANO_SIM_DURATION,   center: MILANO_CENTER,   zoom: isMobile ? 9 : MILANO_ZOOM,   label: 'Milano'   },
+  istanbul: { events: ISTANBUL_EVENTS, simDuration: ISTANBUL_SIM_DURATION, simStart: ISTANBUL_SIM_START, simEnd: ISTANBUL_SIM_END, center: ISTANBUL_CENTER, zoom: isMobile ? 9 : ISTANBUL_ZOOM, label: 'Istanbul' },
+  milano:   { events: MILANO_EVENTS,   simDuration: MILANO_SIM_DURATION,   simStart: MILANO_SIM_START,   simEnd: MILANO_SIM_END,   center: MILANO_CENTER,   zoom: isMobile ? 9 : MILANO_ZOOM,   label: 'Milano'   },
 };
 
 let currentCity = 'istanbul';
@@ -32,6 +32,8 @@ map.on('load', () => {
   const playback = new Playback({
     events: city.events,
     simDuration: city.simDuration,
+    simStart: city.simStart,
+    simEnd: city.simEnd,
     onFrame(activeArcs, virtualTime) {
       deckOverlay.setProps({ layers: buildLayers(activeArcs, virtualTime) });
       updateReviewCards(map);
@@ -70,7 +72,7 @@ map.on('load', () => {
       // Reset and load new data
       clearReviewCards();
       resetStats();
-      playback.loadData(next.events, next.simDuration);
+      playback.loadData(next.events, next.simDuration, next.simStart, next.simEnd);
       playback.play();
     });
   });

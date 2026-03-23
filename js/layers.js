@@ -63,14 +63,15 @@ function computeArcWaypoints(arc) {
   const path = [];
   const timestamps = [];
   for (let i = 0; i < ARC_WAYPOINTS; i++) {
-    const t = i / (ARC_WAYPOINTS - 1);
+    const t = i / (ARC_WAYPOINTS - 1); // position along arc (0→1)
+    const timeFraction = t; // linear — the parabolic altitude already provides organic rhythm
     const alt = 4 * MAX_ALT_M * t * (1 - t); // parabola: 0 at endpoints, MAX_ALT_M at midpoint
     path.push([
       customerLng + t * (proLng - customerLng), // straight line in X
       customerLat + t * (proLat - customerLat), // straight line in Y
       alt,
     ]);
-    timestamps.push(emittedAt + t * arcDuration);
+    timestamps.push(emittedAt + timeFraction * arcDuration);
   }
   arc._tripWaypoints = { path, timestamps };
   return arc._tripWaypoints;

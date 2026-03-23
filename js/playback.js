@@ -1,9 +1,11 @@
 import { ISTANBUL_EVENTS, ISTANBUL_SIM_DURATION } from './data-istanbul.js';
 
 export class Playback {
-  constructor({ events, simDuration, onFrame, onJobEmit, onReviewEmit, onEnd, onSeek }) {
+  constructor({ events, simDuration, simStart, simEnd, onFrame, onJobEmit, onReviewEmit, onEnd, onSeek }) {
     this.events = events || ISTANBUL_EVENTS;
     this.simDuration = simDuration || ISTANBUL_SIM_DURATION;
+    this.simStart = simStart || 0;
+    this.simEnd   = simEnd   || 0;
     this.onFrame = onFrame;
     this.onJobEmit = onJobEmit;
     this.onReviewEmit = onReviewEmit;
@@ -53,10 +55,12 @@ export class Playback {
     });
   }
 
-  loadData(events, simDuration) {
+  loadData(events, simDuration, simStart, simEnd) {
     this.pause();
     this.events = events;
     this.simDuration = simDuration;
+    this.simStart = simStart || 0;
+    this.simEnd   = simEnd   || 0;
     this._seekTo(0);
   }
 
@@ -162,9 +166,20 @@ export class Playback {
   }
 
   _updateTimeDisplay(vt) {
-    const elapsed = Math.floor(vt / 1000);
-    const total = Math.floor(this.simDuration / 1000);
-    const fmt = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
-    document.getElementById('time-display').textContent = `${fmt(elapsed)} / ${fmt(total)}`;
+    let text;
+    if (this.simStart && this.simEnd) {
+      // Map virtualTime → real wall-clock time and show HH:MM
+      const realMs = this.simStart + (vt / this.simDuration) * (this.simEnd - this.simStart);
+      const d = new Date(realMs);
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      text = `${hh}:${mm}`;
+    } else {
+      const elapsed = Math.floor(vt / 1000);
+      const total = Math.floor(this.simDuration / 1000);
+      const fmt = s => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+      text = `${fmt(elapsed)} / ${fmt(total)}`;
+    }
+    document.getElementById('time-display').textContent = text;
   }
 }
