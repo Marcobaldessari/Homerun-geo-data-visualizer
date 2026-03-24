@@ -63,7 +63,6 @@ map.on('load', () => {
       document.querySelectorAll('.city-btn').forEach(b => b.classList.toggle('active', b.dataset.city === cityKey));
 
       // Update branding
-      document.querySelector('.brand-city').textContent = `${next.label} · Live`;
       document.title = `Homerun · ${next.label} Live`;
 
       // Fly map to new city

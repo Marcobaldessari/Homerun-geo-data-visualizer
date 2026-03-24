@@ -24,7 +24,7 @@ var COMET_WIDTH_PX_MOBILE = 3; // core line thickness in pixels (mobile)
 
 var COMET_ALPHA = 220; // core brightness (0–255)
 
-var TRAIL_LENGTH = 1100; // tail length in ms — shorter = faster fade-out
+var TRAIL_LENGTH = 1000; // tail length in ms — shorter = faster fade-out
 //   also controls how much of the arc is visible at once
 // ── Glow ───────────────────────────────────────────────────────────────────
 
@@ -49,11 +49,11 @@ var PULSE_ALPHA = 250; // peak brightness of the ring (0–255)
 var PULSE_WIDTH_PX = 2; // ring stroke thickness in pixels
 // ── Blob circles ───────────────────────────────────────────────────────────
 
-var BLOB_MAX_RADIUS = 5; // peak radius of the filled circle in pixels
+var BLOB_MAX_RADIUS = 7; // peak radius of the filled circle in pixels
 
-var BLOB_EXPAND_MS = 900; // duration of the elastic expand phase in ms
+var BLOB_EXPAND_MS = 1000; // duration of the elastic expand phase in ms
 
-var BLOB_SHRINK_MS = 1000; // duration of the shrink + fade-out phase in ms
+var BLOB_SHRINK_MS = 200; // duration of the shrink + fade-out phase in ms
 
 var BLOB_ALPHA = 220; // peak fill opacity (0–255)
 // ── Light flash ────────────────────────────────────────────────────────────
@@ -177,15 +177,14 @@ function blobRadius(age) {
   if (age < BLOB_EXPAND_MS) return easeOutElastic(age / BLOB_EXPAND_MS) * BLOB_MAX_RADIUS;
   var t = (age - BLOB_EXPAND_MS) / BLOB_SHRINK_MS;
   if (t > 1) return 0;
-  return (1 - easeOutQuint(t)) * BLOB_MAX_RADIUS;
+  return (1 - t * (2 - t)) * BLOB_MAX_RADIUS; // easeOutQuad: fast start, gentle finish
 }
 
 function blobAlpha(age) {
   if (age < 0) return 0;
-  if (age < BLOB_EXPAND_MS) return BLOB_ALPHA;
-  var t = (age - BLOB_EXPAND_MS) / BLOB_SHRINK_MS;
-  if (t > 1) return 0;
-  return Math.round((1 - t) * BLOB_ALPHA);
+  var total = BLOB_EXPAND_MS + BLOB_SHRINK_MS;
+  if (age > total) return 0;
+  return BLOB_ALPHA;
 }
 
 function flashAlpha(age, peakAlpha) {

@@ -6,7 +6,7 @@
 const COMET_WIDTH_PX = 5; // core line thickness in pixels (desktop)
 const COMET_WIDTH_PX_MOBILE = 3; // core line thickness in pixels (mobile)
 const COMET_ALPHA = 220; // core brightness (0–255)
-const TRAIL_LENGTH = 1100; // tail length in ms — shorter = faster fade-out
+const TRAIL_LENGTH = 1000; // tail length in ms — shorter = faster fade-out
 //   also controls how much of the arc is visible at once
 
 // ── Glow ───────────────────────────────────────────────────────────────────
@@ -25,9 +25,9 @@ const PULSE_ALPHA = 250; // peak brightness of the ring (0–255)
 const PULSE_WIDTH_PX = 2; // ring stroke thickness in pixels
 
 // ── Blob circles ───────────────────────────────────────────────────────────
-const BLOB_MAX_RADIUS = 5; // peak radius of the filled circle in pixels
-const BLOB_EXPAND_MS = 900; // duration of the elastic expand phase in ms
-const BLOB_SHRINK_MS = 1000; // duration of the shrink + fade-out phase in ms
+const BLOB_MAX_RADIUS = 7; // peak radius of the filled circle in pixels
+const BLOB_EXPAND_MS = 1000; // duration of the elastic expand phase in ms
+const BLOB_SHRINK_MS = 200; // duration of the shrink + fade-out phase in ms
 const BLOB_ALPHA = 220; // peak fill opacity (0–255)
 
 // ── Light flash ────────────────────────────────────────────────────────────
@@ -51,15 +51,16 @@ const FLASH_CORE_A = 220; // peak alpha of core        (0–255)
 
 const IS_MOBILE = window.innerWidth <= 768;
 
-// Color palette per service category
+// Color palette per service category — sourced from Homerun Olympus Design System
+// https://www.figma.com/design/gWdvUQKkgSaV1sHX5QjbCG/Homerun---Olympus-Design-System?node-id=3289-90
 export const CATEGORY_COLORS = {
-  cleaning: { source: [0, 212, 255], target: [0, 102, 255] },
-  repair: { source: [255, 107, 53], target: [255, 23, 68] },
-  beauty: { source: [224, 64, 251], target: [255, 64, 129] },
-  moving: { source: [105, 240, 174], target: [0, 188, 212] },
-  education: { source: [255, 234, 0], target: [255, 145, 0] },
-  events: { source: [255, 110, 64], target: [245, 0, 87] },
-  other: { source: [176, 190, 197], target: [96, 125, 139] },
+  cleaning:  { source: [115, 198, 255] },  // PoseidonBlue/600   #73C6FF
+  repair:    { source: [236, 112,  44] },  // NotificationOrange/300  #EC702C
+  beauty:    { source: [255, 135, 114] },  // AphroditePink/600  #FF8772
+  moving:    { source: [211, 237, 113] },  // DemeterGreen/300   #D3ED71
+  education: { source: [255, 195,  45] },  // ApolloYellow/600   #FFC32D
+  events:    { source: [153, 160, 255] },  // DionysusPurple/600 #99A0FF
+  other:     { source: [106, 116, 130] },  // Grey/300           #6A7482
 };
 
 function categoryColor(category, type) {
@@ -114,15 +115,14 @@ function blobRadius(age) {
     return easeOutElastic(age / BLOB_EXPAND_MS) * BLOB_MAX_RADIUS;
   const t = (age - BLOB_EXPAND_MS) / BLOB_SHRINK_MS;
   if (t > 1) return 0;
-  return (1 - easeOutQuint(t)) * BLOB_MAX_RADIUS;
+  return (1 - t * (2 - t)) * BLOB_MAX_RADIUS; // easeOutQuad: fast start, gentle finish
 }
 
 function blobAlpha(age) {
   if (age < 0) return 0;
-  if (age < BLOB_EXPAND_MS) return BLOB_ALPHA;
-  const t = (age - BLOB_EXPAND_MS) / BLOB_SHRINK_MS;
-  if (t > 1) return 0;
-  return Math.round((1 - t) * BLOB_ALPHA);
+  const total = BLOB_EXPAND_MS + BLOB_SHRINK_MS;
+  if (age > total) return 0;
+  return BLOB_ALPHA;
 }
 
 function flashAlpha(age, peakAlpha) {

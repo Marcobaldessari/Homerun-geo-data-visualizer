@@ -33,19 +33,9 @@ body {
   gap: 2px;
   z-index: 10;
 }
-.brand-name {
-  font-size: 22px;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: -0.5px;
-  text-shadow: 0 2px 12px rgba(0,0,0,0.6);
-}
-.brand-city {
-  font-size: 12px;
-  color: #00d4ff;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  font-weight: 500;
+.brand-logo {
+  height: 28px;
+  width: auto;
 }
 
 /* ── City toggle ── */
@@ -71,8 +61,8 @@ body {
   color: #fff;
 }
 .city-btn.active {
-  background: #00d4ff;
-  border-color: #00d4ff;
+  background: #2CB34F;
+  border-color: #2CB34F;
   color: #0d0f1a;
 }
 
@@ -105,7 +95,7 @@ body {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #00d4ff;
+  background: #2CB34F;
   border: none;
   color: #0d0f1a;
   font-size: 14px;
@@ -116,7 +106,7 @@ body {
   flex-shrink: 0;
   transition: background 0.2s;
 }
-#btn-play:hover { background: #33ddff; }
+#btn-play:hover { background: #3FCB62; }
 #btn-play.paused::before { content: '⏸'; font-size: 14px; }
 
 #speed-select {
@@ -129,7 +119,7 @@ body {
   cursor: pointer;
   flex-shrink: 0;
 }
-#speed-select:focus { outline: none; border-color: #00d4ff; }
+#speed-select:focus { outline: none; border-color: #2CB34F; }
 
 #scrubber {
   flex: 1;
@@ -146,14 +136,14 @@ body {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #00d4ff;
+  background: #2CB34F;
   cursor: pointer;
 }
 #scrubber::-moz-range-thumb {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #00d4ff;
+  background: #2CB34F;
   border: none;
   cursor: pointer;
 }
@@ -182,7 +172,7 @@ body {
 .stat-value {
   font-size: 22px;
   font-weight: 700;
-  color: #00d4ff;
+  color: #2CB34F;
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
