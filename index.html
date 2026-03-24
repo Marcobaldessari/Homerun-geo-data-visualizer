@@ -12,6 +12,9 @@
   <!-- Deck.gl standalone bundle (includes all layers) -->
   <script src="https://unpkg.com/deck.gl@9.0.32/dist.min.js"></script>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -31,7 +34,7 @@
     </div>
   </div>
 
-  <!-- Bottom HUD -->
+  <!-- Bottom HUD (timeline only — toggle with H) -->
   <div id="hud">
     <div id="hud-controls">
       <button id="btn-play" title="Play / Pause">&#9654;</button>
@@ -43,24 +46,30 @@
         <option value="30">30×</option>
       </select>
       <input type="range" id="scrubber" min="0" max="600000" value="0" step="1000" />
-      <span id="time-display">00:00 / 10:00</span>
     </div>
-    <div id="layer-toggle">
-      <button class="layer-btn active" data-layer="showRequests">Requests</button>
-      <button class="layer-btn active" data-layer="showQuotes">Quotes</button>
-      <button class="layer-btn active" data-layer="showReviews">Reviews</button>
+  </div>
+
+  <!-- Clock -->
+  <div id="time-display">00:00</div>
+
+  <!-- Stats — bottom-left, above HUD -->
+  <div id="hud-stats">
+    <div class="stat">
+      <span class="stat-value" id="stat-jobs">0</span>
+      <span class="stat-label">Requests</span>
     </div>
-    <div id="hud-stats">
-      <div class="stat">
-        <span class="stat-value" id="stat-jobs">0</span>
-        <span class="stat-label">Requests</span>
-      </div>
-      <div class="stat-divider"></div>
-      <div class="stat">
-        <span class="stat-value" id="stat-reviews">0</span>
-        <span class="stat-label">Reviews</span>
-      </div>
+    <div class="stat-divider"></div>
+    <div class="stat">
+      <span class="stat-value" id="stat-reviews">0</span>
+      <span class="stat-label">Reviews</span>
     </div>
+  </div>
+
+  <!-- Layer toggles — bottom-right, above HUD -->
+  <div id="layer-toggle">
+    <button class="layer-btn active" data-layer="showRequests">Requests</button>
+    <button class="layer-btn active" data-layer="showQuotes">Quotes</button>
+    <button class="layer-btn active" data-layer="showReviews">Reviews</button>
   </div>
 
   <!-- Legend -->

@@ -80,8 +80,13 @@ body {
   padding: 12px 24px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 20px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+#hud.hidden {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
 }
 
 #hud-controls {
@@ -149,18 +154,29 @@ body {
 }
 
 #time-display {
-  font-size: 13px;
-  color: #b0b8cc;
-  flex-shrink: 0;
+  position: absolute;
+  bottom: 118px;
+  left: 24px;
+  cursor: pointer;
+  z-index: 10;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 26px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.9);
+  letter-spacing: -1px;
   font-variant-numeric: tabular-nums;
-  min-width: 100px;
+  pointer-events: none;
+  text-shadow: 0 2px 20px rgba(0,0,0,0.6);
 }
 
 #hud-stats {
+  position: absolute;
+  bottom: 68px;
+  left: 24px;
+  z-index: 10;
   display: flex;
   align-items: center;
   gap: 16px;
-  flex-shrink: 0;
 }
 
 .stat {
@@ -190,30 +206,36 @@ body {
 
 /* ── Layer toggles ── */
 #layer-toggle {
+  position: absolute;
+  bottom: 68px;
+  right: 24px;
+  z-index: 10;
   display: flex;
-  gap: 6px;
-  flex-shrink: 0;
+  flex-direction: row;
+  gap: 4px;
+  align-items: center;
 }
 .layer-btn {
-  padding: 5px 12px;
+  padding: 4px 12px;
   border-radius: 20px;
   border: 1px solid rgba(255,255,255,0.2);
   background: rgba(255,255,255,0.05);
-  color: rgba(255,255,255,0.4);
+  color: rgba(255,255,255,0.5);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.5px;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 .layer-btn:hover {
-  background: rgba(255,255,255,0.1);
-  color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.12);
+  color: #fff;
 }
 .layer-btn.active {
-  background: rgba(44, 179, 79, 0.2);
+  background: #2CB34F;
   border-color: #2CB34F;
-  color: #2CB34F;
+  color: #0d0f1a;
 }
 
 /* ── Legend ── */

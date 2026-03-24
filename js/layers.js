@@ -24,6 +24,12 @@ const PULSE_MAX_RADIUS = 20; // ending radius in pixels
 const PULSE_ALPHA = 250; // peak brightness of the ring (0–255)
 const PULSE_WIDTH_PX = 2; // ring stroke thickness in pixels
 
+// Second pulse ring — faster, reaches further, softer
+const PULSE2_DURATION = 480; // expands quicker
+const PULSE2_MAX_RADIUS = 30; // goes further out
+const PULSE2_ALPHA = 110; // dimmer
+const PULSE2_WIDTH_PX = 1; // thinner stroke
+
 // ── Blob circles ───────────────────────────────────────────────────────────
 const BLOB_MAX_RADIUS = 7; // peak radius of the filled circle in pixels
 const BLOB_EXPAND_MS = TRAIL_LENGTH; // duration of the elastic expand phase in ms
@@ -162,6 +168,30 @@ function destPulseAlpha(arc, virtualTime) {
   return Math.round((1 - t / PULSE_DURATION) * PULSE_ALPHA);
 }
 
+function sourcePulse2Radius(arc, virtualTime) {
+  const age = virtualTime - arc.emittedAt;
+  if (age < 0 || age > PULSE2_DURATION) return 0;
+  return PULSE_MIN_RADIUS + easeOutQuint(age / PULSE2_DURATION) * (PULSE2_MAX_RADIUS - PULSE_MIN_RADIUS);
+}
+function sourcePulse2Alpha(arc, virtualTime) {
+  const age = virtualTime - arc.emittedAt;
+  if (age < 0 || age > PULSE2_DURATION) return 0;
+  return Math.round((1 - age / PULSE2_DURATION) * PULSE2_ALPHA);
+}
+
+function destPulse2Radius(arc, virtualTime) {
+  const age = virtualTime - arc.emittedAt;
+  const t = age - arc.arcDuration;
+  if (t < 0 || t > PULSE2_DURATION) return 0;
+  return PULSE_MIN_RADIUS + easeOutQuint(t / PULSE2_DURATION) * (PULSE2_MAX_RADIUS - PULSE_MIN_RADIUS);
+}
+function destPulse2Alpha(arc, virtualTime) {
+  const age = virtualTime - arc.emittedAt;
+  const t = age - arc.arcDuration;
+  if (t < 0 || t > PULSE2_DURATION) return 0;
+  return Math.round((1 - t / PULSE2_DURATION) * PULSE2_ALPHA);
+}
+
 export function buildLayers(
   activeArcs,
   activeQuotes,
@@ -238,6 +268,36 @@ export function buildLayers(
     stroked: true,
     filled: false,
     getLineWidth: PULSE_WIDTH_PX,
+    lineWidthUnits: "pixels",
+    radiusUnits: "pixels",
+    updateTriggers: { getRadius: virtualTime, getLineColor: virtualTime },
+  });
+
+  const sourcePulse2Layer = new ScatterplotLayer({
+    id: "source-pulse-2",
+    data: activeArcs,
+    getPosition: (d) => [d.customerLng, d.customerLat],
+    getRadius: (d) => sourcePulse2Radius(d, virtualTime),
+    getFillColor: [0, 0, 0, 0],
+    getLineColor: (d) => [...categoryColor(d.serviceCategory, "source"), sourcePulse2Alpha(d, virtualTime)],
+    stroked: true,
+    filled: false,
+    getLineWidth: PULSE2_WIDTH_PX,
+    lineWidthUnits: "pixels",
+    radiusUnits: "pixels",
+    updateTriggers: { getRadius: virtualTime, getLineColor: virtualTime },
+  });
+
+  const destPulse2Layer = new ScatterplotLayer({
+    id: "dest-pulse-2",
+    data: activeArcs,
+    getPosition: (d) => [d.proLng, d.proLat],
+    getRadius: (d) => destPulse2Radius(d, virtualTime),
+    getFillColor: [0, 0, 0, 0],
+    getLineColor: (d) => [...categoryColor(d.serviceCategory, "source"), destPulse2Alpha(d, virtualTime)],
+    stroked: true,
+    filled: false,
+    getLineWidth: PULSE2_WIDTH_PX,
     lineWidthUnits: "pixels",
     radiusUnits: "pixels",
     updateTriggers: { getRadius: virtualTime, getLineColor: virtualTime },
@@ -434,6 +494,36 @@ export function buildLayers(
     updateTriggers: { getRadius: virtualTime, getLineColor: virtualTime },
   });
 
+  const quoteSourcePulse2 = new ScatterplotLayer({
+    id: "quote-source-pulse-2",
+    data: activeQuotes,
+    getPosition: (d) => [d.customerLng, d.customerLat],
+    getRadius: (d) => sourcePulse2Radius(d, virtualTime),
+    getFillColor: [0, 0, 0, 0],
+    getLineColor: (d) => [...categoryColor(d.serviceCategory, "source"), sourcePulse2Alpha(d, virtualTime)],
+    stroked: true,
+    filled: false,
+    getLineWidth: PULSE2_WIDTH_PX,
+    lineWidthUnits: "pixels",
+    radiusUnits: "pixels",
+    updateTriggers: { getRadius: virtualTime, getLineColor: virtualTime },
+  });
+
+  const quoteDestPulse2 = new ScatterplotLayer({
+    id: "quote-dest-pulse-2",
+    data: activeQuotes,
+    getPosition: (d) => [d.proLng, d.proLat],
+    getRadius: (d) => destPulse2Radius(d, virtualTime),
+    getFillColor: [0, 0, 0, 0],
+    getLineColor: (d) => [...categoryColor(d.serviceCategory, "source"), destPulse2Alpha(d, virtualTime)],
+    stroked: true,
+    filled: false,
+    getLineWidth: PULSE2_WIDTH_PX,
+    lineWidthUnits: "pixels",
+    radiusUnits: "pixels",
+    updateTriggers: { getRadius: virtualTime, getLineColor: virtualTime },
+  });
+
   const quoteSourceBlob = new ScatterplotLayer({
     id: "quote-source-blob",
     data: activeQuotes,
@@ -473,7 +563,7 @@ export function buildLayers(
         ]
       : []),
     ...(showRequests
-      ? [sourceBlobLayer, destBlobLayer, sourcePulseLayer, destPulseLayer]
+      ? [sourceBlobLayer, destBlobLayer, sourcePulse2Layer, destPulse2Layer, sourcePulseLayer, destPulseLayer]
       : []),
     ...(showQuotes
       ? [
@@ -481,6 +571,8 @@ export function buildLayers(
           quoteTripsLayer,
           quoteSourceBlob,
           quoteDestBlob,
+          quoteSourcePulse2,
+          quoteDestPulse2,
           quoteSourcePulse,
           quoteDestPulse,
         ]

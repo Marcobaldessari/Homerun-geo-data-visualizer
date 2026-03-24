@@ -185,9 +185,11 @@ export class Playback {
       // Map virtualTime → real wall-clock time and show HH:MM
       const realMs = this.simStart + (vt / this.simDuration) * (this.simEnd - this.simStart);
       const d = new Date(realMs);
-      const hh = String(d.getHours()).padStart(2, '0');
+      const h = d.getHours();
+      const hh = String(h % 12 || 12).padStart(2, '0');
       const mm = String(d.getMinutes()).padStart(2, '0');
-      text = `${hh}:${mm}`;
+      const ampm = h < 12 ? 'AM' : 'PM';
+      text = `${hh}:${mm} ${ampm}`;
     } else {
       const elapsed = Math.floor(vt / 1000);
       const total = Math.floor(this.simDuration / 1000);

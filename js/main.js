@@ -67,6 +67,9 @@ map.on('load', () => {
       if (!document.fullscreenElement) document.documentElement.requestFullscreen();
       else document.exitFullscreen();
     }
+    if (e.code === 'KeyH') {
+      document.getElementById('hud').classList.toggle('hidden');
+    }
     if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
       e.preventDefault();
       const speedSel = document.getElementById('speed-select');
@@ -81,6 +84,11 @@ map.on('load', () => {
 
   // Keep review cards repositioned on map move/zoom
   map.on('move', () => updateReviewCards(map));
+
+  // Click on clock toggles the HUD
+  document.getElementById('time-display').addEventListener('click', () => {
+    document.getElementById('hud').classList.toggle('hidden');
+  });
 
   // ── 5. Layer toggles ────────────────────────────────────────────────────
   function syncReviewsBtn() {
