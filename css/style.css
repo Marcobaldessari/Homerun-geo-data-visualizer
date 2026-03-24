@@ -88,6 +88,9 @@ body {
   opacity: 0;
   pointer-events: none;
 }
+body.hud-hidden #time-display { bottom: 68px; }
+body.hud-hidden #hud-stats    { bottom: 16px; }
+body.hud-hidden #layer-toggle { bottom: 16px; }
 
 #hud-controls {
   display: flex;
@@ -158,6 +161,7 @@ body {
   bottom: 118px;
   left: 24px;
   cursor: pointer;
+  transition: bottom 0.3s ease;
   z-index: 10;
   font-family: 'Roboto Mono', monospace;
   font-size: 26px;
@@ -177,6 +181,7 @@ body {
   display: flex;
   align-items: center;
   gap: 16px;
+  transition: bottom 0.3s ease;
 }
 
 .stat {
@@ -214,6 +219,7 @@ body {
   flex-direction: row;
   gap: 4px;
   align-items: center;
+  transition: bottom 0.3s ease;
 }
 .layer-btn {
   padding: 4px 12px;
@@ -350,6 +356,7 @@ body {
 }
 
 /* MapLibre attribution */
-.maplibregl-ctrl-attrib {
-  font-size: 10px !important;
+.maplibregl-ctrl-attrib,
+.maplibregl-ctrl-logo {
+  display: none !important;
 }

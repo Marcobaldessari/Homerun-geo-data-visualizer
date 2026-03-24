@@ -67,8 +67,11 @@ map.on('load', () => {
       if (!document.fullscreenElement) document.documentElement.requestFullscreen();
       else document.exitFullscreen();
     }
-    if (e.code === 'KeyH') {
-      document.getElementById('hud').classList.toggle('hidden');
+    if (e.code === 'KeyH') toggleHud();
+    if (e.code === 'KeyR') {
+      layerVis.showReviews = !layerVis.showReviews;
+      if (!layerVis.showReviews) clearReviewCards();
+      syncReviewsBtn();
     }
     if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
       e.preventDefault();
@@ -85,10 +88,15 @@ map.on('load', () => {
   // Keep review cards repositioned on map move/zoom
   map.on('move', () => updateReviewCards(map));
 
-  // Click on clock toggles the HUD
-  document.getElementById('time-display').addEventListener('click', () => {
-    document.getElementById('hud').classList.toggle('hidden');
-  });
+  function toggleHud() {
+    const hidden = document.getElementById('hud').classList.toggle('hidden');
+    document.body.classList.toggle('hud-hidden', hidden);
+    document.getElementById('btn-toggle-hud').classList.toggle('active', !hidden);
+  }
+
+  // Click on clock or Controls button toggles the HUD
+  document.getElementById('time-display').addEventListener('click', toggleHud);
+  document.getElementById('btn-toggle-hud').addEventListener('click', toggleHud);
 
   // ── 5. Layer toggles ────────────────────────────────────────────────────
   function syncReviewsBtn() {

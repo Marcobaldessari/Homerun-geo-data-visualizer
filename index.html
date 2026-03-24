@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
+<body class="hud-hidden">
 
   <!-- Map fills the viewport -->
   <div id="map"></div>
@@ -35,7 +35,7 @@
   </div>
 
   <!-- Bottom HUD (timeline only — toggle with H) -->
-  <div id="hud">
+  <div id="hud" class="hidden">
     <div id="hud-controls">
       <button id="btn-play" title="Play / Pause">&#9654;</button>
       <select id="speed-select">
@@ -70,6 +70,7 @@
     <button class="layer-btn active" data-layer="showRequests">Requests</button>
     <button class="layer-btn active" data-layer="showQuotes">Quotes</button>
     <button class="layer-btn active" data-layer="showReviews">Reviews</button>
+    <button class="layer-btn" id="btn-toggle-hud">Controls</button>
   </div>
 
   <!-- Legend -->

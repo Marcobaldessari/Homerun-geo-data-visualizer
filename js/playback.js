@@ -157,8 +157,9 @@ export class Playback {
     this._renderFrame(this.virtualTime);
 
     if (this.virtualTime >= this.simDuration) {
-      this.pause();
       this.onEnd();
+      this._seekTo(0);
+      this.play();
       return;
     }
 
