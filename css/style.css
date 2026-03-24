@@ -88,8 +88,6 @@ body {
   opacity: 0;
   pointer-events: none;
 }
-body.hud-hidden #time-display { bottom: 68px; }
-body.hud-hidden #hud-stats    { bottom: 16px; }
 body.hud-hidden #layer-toggle { bottom: 16px; }
 
 #hud-controls {
@@ -156,12 +154,21 @@ body.hud-hidden #layer-toggle { bottom: 16px; }
   cursor: pointer;
 }
 
-#time-display {
+#bottom-left {
   position: absolute;
-  bottom: 118px;
+  bottom: 68px;
   left: 24px;
-  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
   transition: bottom 0.3s ease;
+}
+body.hud-hidden #bottom-left { bottom: 16px; }
+
+#time-display {
+  cursor: pointer;
   z-index: 10;
   font-family: 'Roboto Mono', monospace;
   font-size: 26px;
@@ -174,14 +181,9 @@ body.hud-hidden #layer-toggle { bottom: 16px; }
 }
 
 #hud-stats {
-  position: absolute;
-  bottom: 68px;
-  left: 24px;
-  z-index: 10;
   display: flex;
   align-items: center;
   gap: 16px;
-  transition: bottom 0.3s ease;
 }
 
 .stat {

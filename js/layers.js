@@ -5,7 +5,7 @@
 // ── Comet ──────────────────────────────────────────────────────────────────
 const COMET_WIDTH_PX = 7; // core line thickness in pixels (desktop)
 const COMET_WIDTH_PX_MOBILE = 3; // core line thickness in pixels (mobile)
-const COMET_ALPHA = 220; // core brightness (0–255)
+const COMET_ALPHA = 255; // core brightness (0–255)
 export const TRAIL_LENGTH = 900; // tail length in ms — must be ≤ arcDuration for a
 //   true comet look; if larger than arcDuration the whole arc is always visible
 
@@ -171,7 +171,10 @@ function destPulseAlpha(arc, virtualTime) {
 function sourcePulse2Radius(arc, virtualTime) {
   const age = virtualTime - arc.emittedAt;
   if (age < 0 || age > PULSE2_DURATION) return 0;
-  return PULSE_MIN_RADIUS + easeOutQuint(age / PULSE2_DURATION) * (PULSE2_MAX_RADIUS - PULSE_MIN_RADIUS);
+  return (
+    PULSE_MIN_RADIUS +
+    easeOutQuint(age / PULSE2_DURATION) * (PULSE2_MAX_RADIUS - PULSE_MIN_RADIUS)
+  );
 }
 function sourcePulse2Alpha(arc, virtualTime) {
   const age = virtualTime - arc.emittedAt;
@@ -183,7 +186,10 @@ function destPulse2Radius(arc, virtualTime) {
   const age = virtualTime - arc.emittedAt;
   const t = age - arc.arcDuration;
   if (t < 0 || t > PULSE2_DURATION) return 0;
-  return PULSE_MIN_RADIUS + easeOutQuint(t / PULSE2_DURATION) * (PULSE2_MAX_RADIUS - PULSE_MIN_RADIUS);
+  return (
+    PULSE_MIN_RADIUS +
+    easeOutQuint(t / PULSE2_DURATION) * (PULSE2_MAX_RADIUS - PULSE_MIN_RADIUS)
+  );
 }
 function destPulse2Alpha(arc, virtualTime) {
   const age = virtualTime - arc.emittedAt;
@@ -279,7 +285,10 @@ export function buildLayers(
     getPosition: (d) => [d.customerLng, d.customerLat],
     getRadius: (d) => sourcePulse2Radius(d, virtualTime),
     getFillColor: [0, 0, 0, 0],
-    getLineColor: (d) => [...categoryColor(d.serviceCategory, "source"), sourcePulse2Alpha(d, virtualTime)],
+    getLineColor: (d) => [
+      ...categoryColor(d.serviceCategory, "source"),
+      sourcePulse2Alpha(d, virtualTime),
+    ],
     stroked: true,
     filled: false,
     getLineWidth: PULSE2_WIDTH_PX,
@@ -294,7 +303,10 @@ export function buildLayers(
     getPosition: (d) => [d.proLng, d.proLat],
     getRadius: (d) => destPulse2Radius(d, virtualTime),
     getFillColor: [0, 0, 0, 0],
-    getLineColor: (d) => [...categoryColor(d.serviceCategory, "source"), destPulse2Alpha(d, virtualTime)],
+    getLineColor: (d) => [
+      ...categoryColor(d.serviceCategory, "source"),
+      destPulse2Alpha(d, virtualTime),
+    ],
     stroked: true,
     filled: false,
     getLineWidth: PULSE2_WIDTH_PX,
@@ -500,7 +512,10 @@ export function buildLayers(
     getPosition: (d) => [d.customerLng, d.customerLat],
     getRadius: (d) => sourcePulse2Radius(d, virtualTime),
     getFillColor: [0, 0, 0, 0],
-    getLineColor: (d) => [...categoryColor(d.serviceCategory, "source"), sourcePulse2Alpha(d, virtualTime)],
+    getLineColor: (d) => [
+      ...categoryColor(d.serviceCategory, "source"),
+      sourcePulse2Alpha(d, virtualTime),
+    ],
     stroked: true,
     filled: false,
     getLineWidth: PULSE2_WIDTH_PX,
@@ -515,7 +530,10 @@ export function buildLayers(
     getPosition: (d) => [d.proLng, d.proLat],
     getRadius: (d) => destPulse2Radius(d, virtualTime),
     getFillColor: [0, 0, 0, 0],
-    getLineColor: (d) => [...categoryColor(d.serviceCategory, "source"), destPulse2Alpha(d, virtualTime)],
+    getLineColor: (d) => [
+      ...categoryColor(d.serviceCategory, "source"),
+      destPulse2Alpha(d, virtualTime),
+    ],
     stroked: true,
     filled: false,
     getLineWidth: PULSE2_WIDTH_PX,
@@ -563,7 +581,14 @@ export function buildLayers(
         ]
       : []),
     ...(showRequests
-      ? [sourceBlobLayer, destBlobLayer, sourcePulse2Layer, destPulse2Layer, sourcePulseLayer, destPulseLayer]
+      ? [
+          sourceBlobLayer,
+          destBlobLayer,
+          sourcePulse2Layer,
+          destPulse2Layer,
+          sourcePulseLayer,
+          destPulseLayer,
+        ]
       : []),
     ...(showQuotes
       ? [

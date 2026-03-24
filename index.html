@@ -39,9 +39,9 @@
     <div id="hud-controls">
       <button id="btn-play" title="Play / Pause">&#9654;</button>
       <select id="speed-select">
-        <option value="1" selected>1×</option>
+        <option value="1">1×</option>
         <option value="3">3×</option>
-        <option value="6">6×</option>
+        <option value="6" selected>6×</option>
         <option value="12">12×</option>
         <option value="30">30×</option>
       </select>
@@ -49,19 +49,19 @@
     </div>
   </div>
 
-  <!-- Clock -->
-  <div id="time-display">00:00</div>
-
-  <!-- Stats — bottom-left, above HUD -->
-  <div id="hud-stats">
-    <div class="stat">
-      <span class="stat-value" id="stat-jobs">0</span>
-      <span class="stat-label">Requests</span>
-    </div>
-    <div class="stat-divider"></div>
-    <div class="stat">
-      <span class="stat-value" id="stat-reviews">0</span>
-      <span class="stat-label">Reviews</span>
+  <!-- Bottom-left: clock + stats stacked and left-aligned -->
+  <div id="bottom-left">
+    <div id="time-display">00:00</div>
+    <div id="hud-stats">
+      <div class="stat">
+        <span class="stat-value" id="stat-jobs">0</span>
+        <span class="stat-label">Requests</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-value" id="stat-reviews">0</span>
+        <span class="stat-label">Reviews</span>
+      </div>
     </div>
   </div>
 

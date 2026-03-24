@@ -15,7 +15,7 @@ export class Playback {
 
 
     this.isPlaying = false;
-    this.speedFactor = 1;
+    this.speedFactor = Number(document.getElementById('speed-select').value);
     this.virtualTime = 0;    // current simulated ms
     this.wallStart = null;   // wall clock when play was last pressed
     this.pausedAt = 0;       // virtualTime at last pause

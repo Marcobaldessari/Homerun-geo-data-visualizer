@@ -22,7 +22,7 @@ var COMET_WIDTH_PX = 7; // core line thickness in pixels (desktop)
 
 var COMET_WIDTH_PX_MOBILE = 3; // core line thickness in pixels (mobile)
 
-var COMET_ALPHA = 220; // core brightness (0–255)
+var COMET_ALPHA = 255; // core brightness (0–255)
 
 var TRAIL_LENGTH = 900; // tail length in ms — must be ≤ arcDuration for a
 //   true comet look; if larger than arcDuration the whole arc is always visible
@@ -48,6 +48,15 @@ var PULSE_MAX_RADIUS = 20; // ending radius in pixels
 var PULSE_ALPHA = 250; // peak brightness of the ring (0–255)
 
 var PULSE_WIDTH_PX = 2; // ring stroke thickness in pixels
+// Second pulse ring — faster, reaches further, softer
+
+var PULSE2_DURATION = 480; // expands quicker
+
+var PULSE2_MAX_RADIUS = 30; // goes further out
+
+var PULSE2_ALPHA = 110; // dimmer
+
+var PULSE2_WIDTH_PX = 1; // thinner stroke
 // ── Blob circles ───────────────────────────────────────────────────────────
 
 var BLOB_MAX_RADIUS = 7; // peak radius of the filled circle in pixels
@@ -222,6 +231,32 @@ function destPulseAlpha(arc, virtualTime) {
   return Math.round((1 - t / PULSE_DURATION) * PULSE_ALPHA);
 }
 
+function sourcePulse2Radius(arc, virtualTime) {
+  var age = virtualTime - arc.emittedAt;
+  if (age < 0 || age > PULSE2_DURATION) return 0;
+  return PULSE_MIN_RADIUS + easeOutQuint(age / PULSE2_DURATION) * (PULSE2_MAX_RADIUS - PULSE_MIN_RADIUS);
+}
+
+function sourcePulse2Alpha(arc, virtualTime) {
+  var age = virtualTime - arc.emittedAt;
+  if (age < 0 || age > PULSE2_DURATION) return 0;
+  return Math.round((1 - age / PULSE2_DURATION) * PULSE2_ALPHA);
+}
+
+function destPulse2Radius(arc, virtualTime) {
+  var age = virtualTime - arc.emittedAt;
+  var t = age - arc.arcDuration;
+  if (t < 0 || t > PULSE2_DURATION) return 0;
+  return PULSE_MIN_RADIUS + easeOutQuint(t / PULSE2_DURATION) * (PULSE2_MAX_RADIUS - PULSE_MIN_RADIUS);
+}
+
+function destPulse2Alpha(arc, virtualTime) {
+  var age = virtualTime - arc.emittedAt;
+  var t = age - arc.arcDuration;
+  if (t < 0 || t > PULSE2_DURATION) return 0;
+  return Math.round((1 - t / PULSE2_DURATION) * PULSE2_ALPHA);
+}
+
 function buildLayers(activeArcs, activeQuotes, virtualTime) {
   var _ref = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {},
       _ref$showRequests = _ref.showRequests,
@@ -316,6 +351,52 @@ function buildLayers(activeArcs, activeQuotes, virtualTime) {
     stroked: true,
     filled: false,
     getLineWidth: PULSE_WIDTH_PX,
+    lineWidthUnits: "pixels",
+    radiusUnits: "pixels",
+    updateTriggers: {
+      getRadius: virtualTime,
+      getLineColor: virtualTime
+    }
+  });
+  var sourcePulse2Layer = new ScatterplotLayer({
+    id: "source-pulse-2",
+    data: activeArcs,
+    getPosition: function getPosition(d) {
+      return [d.customerLng, d.customerLat];
+    },
+    getRadius: function getRadius(d) {
+      return sourcePulse2Radius(d, virtualTime);
+    },
+    getFillColor: [0, 0, 0, 0],
+    getLineColor: function getLineColor(d) {
+      return [].concat(_toConsumableArray(categoryColor(d.serviceCategory, "source")), [sourcePulse2Alpha(d, virtualTime)]);
+    },
+    stroked: true,
+    filled: false,
+    getLineWidth: PULSE2_WIDTH_PX,
+    lineWidthUnits: "pixels",
+    radiusUnits: "pixels",
+    updateTriggers: {
+      getRadius: virtualTime,
+      getLineColor: virtualTime
+    }
+  });
+  var destPulse2Layer = new ScatterplotLayer({
+    id: "dest-pulse-2",
+    data: activeArcs,
+    getPosition: function getPosition(d) {
+      return [d.proLng, d.proLat];
+    },
+    getRadius: function getRadius(d) {
+      return destPulse2Radius(d, virtualTime);
+    },
+    getFillColor: [0, 0, 0, 0],
+    getLineColor: function getLineColor(d) {
+      return [].concat(_toConsumableArray(categoryColor(d.serviceCategory, "source")), [destPulse2Alpha(d, virtualTime)]);
+    },
+    stroked: true,
+    filled: false,
+    getLineWidth: PULSE2_WIDTH_PX,
     lineWidthUnits: "pixels",
     radiusUnits: "pixels",
     updateTriggers: {
@@ -554,6 +635,52 @@ function buildLayers(activeArcs, activeQuotes, virtualTime) {
       getLineColor: virtualTime
     }
   });
+  var quoteSourcePulse2 = new ScatterplotLayer({
+    id: "quote-source-pulse-2",
+    data: activeQuotes,
+    getPosition: function getPosition(d) {
+      return [d.customerLng, d.customerLat];
+    },
+    getRadius: function getRadius(d) {
+      return sourcePulse2Radius(d, virtualTime);
+    },
+    getFillColor: [0, 0, 0, 0],
+    getLineColor: function getLineColor(d) {
+      return [].concat(_toConsumableArray(categoryColor(d.serviceCategory, "source")), [sourcePulse2Alpha(d, virtualTime)]);
+    },
+    stroked: true,
+    filled: false,
+    getLineWidth: PULSE2_WIDTH_PX,
+    lineWidthUnits: "pixels",
+    radiusUnits: "pixels",
+    updateTriggers: {
+      getRadius: virtualTime,
+      getLineColor: virtualTime
+    }
+  });
+  var quoteDestPulse2 = new ScatterplotLayer({
+    id: "quote-dest-pulse-2",
+    data: activeQuotes,
+    getPosition: function getPosition(d) {
+      return [d.proLng, d.proLat];
+    },
+    getRadius: function getRadius(d) {
+      return destPulse2Radius(d, virtualTime);
+    },
+    getFillColor: [0, 0, 0, 0],
+    getLineColor: function getLineColor(d) {
+      return [].concat(_toConsumableArray(categoryColor(d.serviceCategory, "source")), [destPulse2Alpha(d, virtualTime)]);
+    },
+    stroked: true,
+    filled: false,
+    getLineWidth: PULSE2_WIDTH_PX,
+    lineWidthUnits: "pixels",
+    radiusUnits: "pixels",
+    updateTriggers: {
+      getRadius: virtualTime,
+      getLineColor: virtualTime
+    }
+  });
   var quoteSourceBlob = new ScatterplotLayer({
     id: "quote-source-blob",
     data: activeQuotes,
@@ -590,5 +717,5 @@ function buildLayers(activeArcs, activeQuotes, virtualTime) {
       getFillColor: virtualTime
     }
   });
-  return [].concat(_toConsumableArray(showRequests ? [glowLayer, tripsLayer] : []), _toConsumableArray(showRequests && FLASH_ENABLED ? [srcFlashOuter, srcFlashMid, srcFlashCore, dstFlashOuter, dstFlashMid, dstFlashCore] : []), _toConsumableArray(showRequests ? [sourceBlobLayer, destBlobLayer, sourcePulseLayer, destPulseLayer] : []), _toConsumableArray(showQuotes ? [quoteGlowLayer, quoteTripsLayer, quoteSourceBlob, quoteDestBlob, quoteSourcePulse, quoteDestPulse] : []));
+  return [].concat(_toConsumableArray(showRequests ? [glowLayer, tripsLayer] : []), _toConsumableArray(showRequests && FLASH_ENABLED ? [srcFlashOuter, srcFlashMid, srcFlashCore, dstFlashOuter, dstFlashMid, dstFlashCore] : []), _toConsumableArray(showRequests ? [sourceBlobLayer, destBlobLayer, sourcePulse2Layer, destPulse2Layer, sourcePulseLayer, destPulseLayer] : []), _toConsumableArray(showQuotes ? [quoteGlowLayer, quoteTripsLayer, quoteSourceBlob, quoteDestBlob, quoteSourcePulse2, quoteDestPulse2, quoteSourcePulse, quoteDestPulse] : []));
 }
