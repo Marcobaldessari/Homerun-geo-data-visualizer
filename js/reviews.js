@@ -11,10 +11,18 @@ export function emitReviewCard(ev, map) {
   el.style.borderLeftColor = getCategoryColor(ev.serviceCategory);
 
   el.innerHTML = `
+    <button class="review-card-close" aria-label="Hide reviews">
+      <span class="review-card-close-label">Hide reviews</span>✕
+    </button>
     <div class="review-card-stars">${starsHtml(ev.rating)}</div>
     <div class="review-card-text">${ev.reviewText}</div>
     <div class="review-card-meta"><strong>${ev.proName}</strong> · ${ev.serviceName}</div>
   `;
+
+  el.querySelector('.review-card-close').addEventListener('click', e => {
+    e.stopPropagation();
+    document.dispatchEvent(new CustomEvent('toggle-reviews'));
+  });
 
   overlay.appendChild(el);
 

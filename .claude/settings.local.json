@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__redash__execute_adhoc_query",
+      "mcp__redash__create_query",
+      "mcp__redash__get_schema",
+      "Bash(python3 -c \":*)"
+    ]
+  }
+}

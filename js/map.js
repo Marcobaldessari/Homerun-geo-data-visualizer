@@ -39,6 +39,7 @@ export function initMap() {
     minZoom: isMobile ? MIN_ZOOM_MOBILE  : MIN_ZOOM_DESKTOP,
     maxZoom: isMobile ? MAX_ZOOM_MOBILE  : MAX_ZOOM_DESKTOP,
     pitch: 45,
+    maxPitch: 85,
     bearing: 0,
     antialias: true,
   });
@@ -84,7 +85,7 @@ export function initMap() {
     lastX = e.clientX;
     lastY = e.clientY;
     map.setBearing(map.getBearing() + dx * 0.4);
-    map.setPitch(Math.max(0, Math.min(80, map.getPitch() - dy * 0.3)));
+    map.setPitch(Math.max(0, Math.min(85, map.getPitch() - dy * 0.3)));
   });
 
   window.addEventListener('mouseup', e => {
@@ -124,7 +125,7 @@ export function initMap() {
     lastX = e.touches[0].clientX;
     lastY = e.touches[0].clientY;
     map.setBearing(map.getBearing() + dx * 0.4);
-    map.setPitch(Math.max(0, Math.min(80, map.getPitch() - dy * 0.3)));
+    map.setPitch(Math.max(0, Math.min(85, map.getPitch() - dy * 0.3)));
   }, { passive: false });
 
   window.addEventListener('touchend', () => {

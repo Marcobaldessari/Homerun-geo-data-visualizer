@@ -3,11 +3,11 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 // ── Comet ──────────────────────────────────────────────────────────────────
-const COMET_WIDTH_PX = 5; // core line thickness in pixels (desktop)
+const COMET_WIDTH_PX = 7; // core line thickness in pixels (desktop)
 const COMET_WIDTH_PX_MOBILE = 3; // core line thickness in pixels (mobile)
 const COMET_ALPHA = 220; // core brightness (0–255)
-const TRAIL_LENGTH = 1000; // tail length in ms — shorter = faster fade-out
-//   also controls how much of the arc is visible at once
+export const TRAIL_LENGTH = 900; // tail length in ms — must be ≤ arcDuration for a
+//   true comet look; if larger than arcDuration the whole arc is always visible
 
 // ── Glow ───────────────────────────────────────────────────────────────────
 const GLOW_WIDTH_PX = 16; // glow halo thickness in pixels
@@ -26,7 +26,7 @@ const PULSE_WIDTH_PX = 2; // ring stroke thickness in pixels
 
 // ── Blob circles ───────────────────────────────────────────────────────────
 const BLOB_MAX_RADIUS = 7; // peak radius of the filled circle in pixels
-const BLOB_EXPAND_MS = 1000; // duration of the elastic expand phase in ms
+const BLOB_EXPAND_MS = TRAIL_LENGTH; // duration of the elastic expand phase in ms
 const BLOB_SHRINK_MS = 200; // duration of the shrink + fade-out phase in ms
 const BLOB_ALPHA = 220; // peak fill opacity (0–255)
 
@@ -54,13 +54,13 @@ const IS_MOBILE = window.innerWidth <= 768;
 // Color palette per service category — sourced from Homerun Olympus Design System
 // https://www.figma.com/design/gWdvUQKkgSaV1sHX5QjbCG/Homerun---Olympus-Design-System?node-id=3289-90
 export const CATEGORY_COLORS = {
-  cleaning:  { source: [115, 198, 255] },  // PoseidonBlue/600   #73C6FF
-  repair:    { source: [236, 112,  44] },  // NotificationOrange/300  #EC702C
-  beauty:    { source: [255, 135, 114] },  // AphroditePink/600  #FF8772
-  moving:    { source: [211, 237, 113] },  // DemeterGreen/300   #D3ED71
-  education: { source: [255, 195,  45] },  // ApolloYellow/600   #FFC32D
-  events:    { source: [153, 160, 255] },  // DionysusPurple/600 #99A0FF
-  other:     { source: [106, 116, 130] },  // Grey/300           #6A7482
+  cleaning: { source: [115, 198, 255] }, // PoseidonBlue/600   #73C6FF
+  repair: { source: [236, 112, 44] }, // NotificationOrange/300  #EC702C
+  beauty: { source: [255, 135, 114] }, // AphroditePink/600  #FF8772
+  moving: { source: [211, 237, 113] }, // DemeterGreen/300   #D3ED71
+  education: { source: [255, 195, 45] }, // ApolloYellow/600   #FFC32D
+  events: { source: [153, 160, 255] }, // DionysusPurple/600 #99A0FF
+  other: { source: [106, 116, 130] }, // Grey/300           #6A7482
 };
 
 function categoryColor(category, type) {
@@ -162,7 +162,12 @@ function destPulseAlpha(arc, virtualTime) {
   return Math.round((1 - t / PULSE_DURATION) * PULSE_ALPHA);
 }
 
-export function buildLayers(activeArcs, virtualTime) {
+export function buildLayers(
+  activeArcs,
+  activeQuotes,
+  virtualTime,
+  { showRequests = true, showQuotes = true } = {},
+) {
   const { TripsLayer, ScatterplotLayer } = deck;
   const ADDITIVE = { blend: true, blendFunc: [770, 1] }; // SRC_ALPHA + ONE
 
@@ -360,10 +365,104 @@ export function buildLayers(activeArcs, virtualTime) {
     updateTriggers: { getFillColor: virtualTime },
   });
 
+  // ── Quote arcs (pro → job location) ─────────────────────────────────────
+  const quoteTripsLayer = new TripsLayer({
+    id: "quotes-trips",
+    data: activeQuotes,
+    getPath: (d) => computeArcWaypoints(d).path,
+    getTimestamps: (d) => computeArcWaypoints(d).timestamps,
+    getColor: (d) => [
+      ...categoryColor(d.serviceCategory, "source"),
+      COMET_ALPHA,
+    ],
+    positionFormat: "XYZ",
+    currentTime: virtualTime,
+    trailLength: TRAIL_LENGTH,
+    widthMinPixels: IS_MOBILE ? COMET_WIDTH_PX_MOBILE : COMET_WIDTH_PX,
+    fadeTrail: true,
+  });
+
+  const quoteGlowLayer = new TripsLayer({
+    id: "quotes-trips-glow",
+    data: activeQuotes,
+    getPath: (d) => computeArcWaypoints(d).path,
+    getTimestamps: (d) => computeArcWaypoints(d).timestamps,
+    getColor: (d) => [
+      ...categoryColor(d.serviceCategory, "source"),
+      GLOW_ALPHA,
+    ],
+    positionFormat: "XYZ",
+    currentTime: virtualTime,
+    trailLength: TRAIL_LENGTH,
+    widthMinPixels: GLOW_WIDTH_PX,
+    fadeTrail: true,
+  });
+
+  const quoteSourcePulse = new ScatterplotLayer({
+    id: "quote-source-pulse",
+    data: activeQuotes,
+    getPosition: (d) => [d.customerLng, d.customerLat],
+    getRadius: (d) => sourcePulseRadius(d, virtualTime),
+    getFillColor: [0, 0, 0, 0],
+    getLineColor: (d) => [
+      ...categoryColor(d.serviceCategory, "source"),
+      sourcePulseAlpha(d, virtualTime),
+    ],
+    stroked: true,
+    filled: false,
+    getLineWidth: PULSE_WIDTH_PX,
+    lineWidthUnits: "pixels",
+    radiusUnits: "pixels",
+    updateTriggers: { getRadius: virtualTime, getLineColor: virtualTime },
+  });
+
+  const quoteDestPulse = new ScatterplotLayer({
+    id: "quote-dest-pulse",
+    data: activeQuotes,
+    getPosition: (d) => [d.proLng, d.proLat],
+    getRadius: (d) => destPulseRadius(d, virtualTime),
+    getFillColor: [0, 0, 0, 0],
+    getLineColor: (d) => [
+      ...categoryColor(d.serviceCategory, "source"),
+      destPulseAlpha(d, virtualTime),
+    ],
+    stroked: true,
+    filled: false,
+    getLineWidth: PULSE_WIDTH_PX,
+    lineWidthUnits: "pixels",
+    radiusUnits: "pixels",
+    updateTriggers: { getRadius: virtualTime, getLineColor: virtualTime },
+  });
+
+  const quoteSourceBlob = new ScatterplotLayer({
+    id: "quote-source-blob",
+    data: activeQuotes,
+    getPosition: (d) => [d.customerLng, d.customerLat],
+    getRadius: (d) => blobRadius(virtualTime - d.emittedAt),
+    getFillColor: (d) => [
+      ...categoryColor(d.serviceCategory, "source"),
+      blobAlpha(virtualTime - d.emittedAt),
+    ],
+    radiusUnits: "pixels",
+    updateTriggers: { getRadius: virtualTime, getFillColor: virtualTime },
+  });
+
+  const quoteDestBlob = new ScatterplotLayer({
+    id: "quote-dest-blob",
+    data: activeQuotes,
+    getPosition: (d) => [d.proLng, d.proLat],
+    getRadius: (d) => blobRadius(virtualTime - d.emittedAt - d.arcDuration),
+    getFillColor: (d) => [
+      ...categoryColor(d.serviceCategory, "source"),
+      blobAlpha(virtualTime - d.emittedAt - d.arcDuration),
+    ],
+    radiusUnits: "pixels",
+    updateTriggers: { getRadius: virtualTime, getFillColor: virtualTime },
+  });
+
   return [
-    glowLayer,
-    tripsLayer,
-    ...(FLASH_ENABLED
+    ...(showRequests ? [glowLayer, tripsLayer] : []),
+    ...(showRequests && FLASH_ENABLED
       ? [
           srcFlashOuter,
           srcFlashMid,
@@ -373,9 +472,18 @@ export function buildLayers(activeArcs, virtualTime) {
           dstFlashCore,
         ]
       : []),
-    sourceBlobLayer,
-    destBlobLayer,
-    sourcePulseLayer,
-    destPulseLayer,
+    ...(showRequests
+      ? [sourceBlobLayer, destBlobLayer, sourcePulseLayer, destPulseLayer]
+      : []),
+    ...(showQuotes
+      ? [
+          quoteGlowLayer,
+          quoteTripsLayer,
+          quoteSourceBlob,
+          quoteDestBlob,
+          quoteSourcePulse,
+          quoteDestPulse,
+        ]
+      : []),
   ];
 }

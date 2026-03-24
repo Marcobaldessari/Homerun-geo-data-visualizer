@@ -1,4 +1,5 @@
 import { ISTANBUL_EVENTS, ISTANBUL_SIM_DURATION } from './data-istanbul.js';
+import { TRAIL_LENGTH } from './layers.js';
 
 export class Playback {
   constructor({ events, simDuration, simStart, simEnd, onFrame, onJobEmit, onReviewEmit, onEnd, onSeek }) {
@@ -12,6 +13,7 @@ export class Playback {
     this.onEnd = onEnd;
     this.onSeek = onSeek || (() => {});
 
+
     this.isPlaying = false;
     this.speedFactor = 1;
     this.virtualTime = 0;    // current simulated ms
@@ -20,6 +22,7 @@ export class Playback {
 
     this.eventPointer = 0;
     this.activeArcs = [];
+    this.activeQuotes = [];
     this.rafId = null;
 
     this._bindControls();
@@ -90,19 +93,23 @@ export class Playback {
 
     // Rebuild active arcs by replaying from beginning
     this.activeArcs = [];
+    this.activeQuotes = [];
     this.eventPointer = 0;
     this.onSeek(this.virtualTime);
-    const FADE_OUT_BUFFER = 2000; // ms: keep arcs that started within this window
-
     for (let i = 0; i < this.events.length; i++) {
       const ev = this.events[i];
       if (ev.timestamp > this.virtualTime) break;
       this.eventPointer = i + 1;
 
       if (ev.type === 'job') {
-        const endTime = ev.timestamp + ev.arcDuration + 500;
-        if (endTime >= this.virtualTime - FADE_OUT_BUFFER) {
+        const endTime = ev.timestamp + ev.arcDuration + TRAIL_LENGTH + 500;
+        if (endTime >= this.virtualTime) {
           this.activeArcs.push({ ...ev, emittedAt: ev.timestamp });
+        }
+      } else if (ev.type === 'quote') {
+        const endTime = ev.timestamp + ev.arcDuration + TRAIL_LENGTH + 500;
+        if (endTime >= this.virtualTime) {
+          this.activeQuotes.push({ ...ev, emittedAt: ev.timestamp });
         }
       }
     }
@@ -131,13 +138,20 @@ export class Playback {
         this.onJobEmit(ev);
       } else if (ev.type === 'review') {
         this.onReviewEmit(ev);
+      } else if (ev.type === 'quote') {
+        const arc = { ...ev, emittedAt: ev.timestamp };
+        this.activeQuotes.push(arc);
       }
     }
 
-    // Cull expired arcs
+    // Cull expired arcs — keep alive for full trail fade (arcDuration + TRAIL_LENGTH + 500)
     this.activeArcs = this.activeArcs.filter(arc => {
       const age = this.virtualTime - arc.emittedAt;
-      return age < arc.arcDuration + 1500;
+      return age < arc.arcDuration + TRAIL_LENGTH + 500;
+    });
+    this.activeQuotes = this.activeQuotes.filter(arc => {
+      const age = this.virtualTime - arc.emittedAt;
+      return age < arc.arcDuration + TRAIL_LENGTH + 500;
     });
 
     this._renderFrame(this.virtualTime);
@@ -154,7 +168,7 @@ export class Playback {
   _renderFrame(virtualTime) {
     this._updateScrubber(virtualTime);
     this._updateTimeDisplay(virtualTime);
-    this.onFrame(this.activeArcs, virtualTime);
+    this.onFrame(this.activeArcs, this.activeQuotes, virtualTime);
   }
 
   _updateScrubber(vt) {

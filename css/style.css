@@ -188,6 +188,34 @@ body {
   background: rgba(255,255,255,0.1);
 }
 
+/* ── Layer toggles ── */
+#layer-toggle {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.layer-btn {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.4);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.layer-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.7);
+}
+.layer-btn.active {
+  background: rgba(44, 179, 79, 0.2);
+  border-color: #2CB34F;
+  color: #2CB34F;
+}
+
 /* ── Legend ── */
 #legend {
   position: absolute;
@@ -232,6 +260,40 @@ body {
   backdrop-filter: blur(6px);
   animation: card-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   z-index: 20;
+}
+.review-card-close {
+  pointer-events: auto;
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255,255,255,0.35);
+  font-size: 11px;
+  line-height: 1;
+  padding: 4px 5px;
+  border-radius: 5px;
+  transition: color 0.15s, background 0.15s;
+}
+.review-card-close:hover {
+  color: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.08);
+}
+.review-card-close-label {
+  opacity: 0;
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 11px;
+  transition: opacity 0.2s, max-width 0.2s;
+}
+.review-card-close:hover .review-card-close-label {
+  opacity: 1;
+  max-width: 80px;
 }
 .review-card.fading {
   animation: card-fade 0.5s ease forwards;

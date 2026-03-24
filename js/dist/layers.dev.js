@@ -4,7 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.buildLayers = buildLayers;
-exports.CATEGORY_COLORS = void 0;
+exports.CATEGORY_COLORS = exports.TRAIL_LENGTH = void 0;
 
 function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread(); }
 
@@ -18,16 +18,17 @@ function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 // ANIMATION SETTINGS — tweak these to adjust the visual behaviour
 // ═══════════════════════════════════════════════════════════════════════════
 // ── Comet ──────────────────────────────────────────────────────────────────
-var COMET_WIDTH_PX = 5; // core line thickness in pixels (desktop)
+var COMET_WIDTH_PX = 7; // core line thickness in pixels (desktop)
 
 var COMET_WIDTH_PX_MOBILE = 3; // core line thickness in pixels (mobile)
 
 var COMET_ALPHA = 220; // core brightness (0–255)
 
-var TRAIL_LENGTH = 1000; // tail length in ms — shorter = faster fade-out
-//   also controls how much of the arc is visible at once
+var TRAIL_LENGTH = 900; // tail length in ms — must be ≤ arcDuration for a
+//   true comet look; if larger than arcDuration the whole arc is always visible
 // ── Glow ───────────────────────────────────────────────────────────────────
 
+exports.TRAIL_LENGTH = TRAIL_LENGTH;
 var GLOW_WIDTH_PX = 16; // glow halo thickness in pixels
 
 var GLOW_ALPHA = 40; // glow brightness (0–255), keep well below COMET_ALPHA
@@ -51,7 +52,7 @@ var PULSE_WIDTH_PX = 2; // ring stroke thickness in pixels
 
 var BLOB_MAX_RADIUS = 7; // peak radius of the filled circle in pixels
 
-var BLOB_EXPAND_MS = 1000; // duration of the elastic expand phase in ms
+var BLOB_EXPAND_MS = TRAIL_LENGTH; // duration of the elastic expand phase in ms
 
 var BLOB_SHRINK_MS = 200; // duration of the shrink + fade-out phase in ms
 
@@ -83,37 +84,38 @@ var FLASH_CORE_A = 220; // peak alpha of core        (0–255)
 //   js/data-milano.js    ~line 570
 // ═══════════════════════════════════════════════════════════════════════════
 
-var IS_MOBILE = window.innerWidth <= 768; // Color palette per service category
+var IS_MOBILE = window.innerWidth <= 768; // Color palette per service category — sourced from Homerun Olympus Design System
+// https://www.figma.com/design/gWdvUQKkgSaV1sHX5QjbCG/Homerun---Olympus-Design-System?node-id=3289-90
 
 var CATEGORY_COLORS = {
   cleaning: {
-    source: [0, 212, 255],
-    target: [0, 102, 255]
+    source: [115, 198, 255]
   },
+  // PoseidonBlue/600   #73C6FF
   repair: {
-    source: [255, 107, 53],
-    target: [255, 23, 68]
+    source: [236, 112, 44]
   },
+  // NotificationOrange/300  #EC702C
   beauty: {
-    source: [224, 64, 251],
-    target: [255, 64, 129]
+    source: [255, 135, 114]
   },
+  // AphroditePink/600  #FF8772
   moving: {
-    source: [105, 240, 174],
-    target: [0, 188, 212]
+    source: [211, 237, 113]
   },
+  // DemeterGreen/300   #D3ED71
   education: {
-    source: [255, 234, 0],
-    target: [255, 145, 0]
+    source: [255, 195, 45]
   },
+  // ApolloYellow/600   #FFC32D
   events: {
-    source: [255, 110, 64],
-    target: [245, 0, 87]
+    source: [153, 160, 255]
   },
+  // DionysusPurple/600 #99A0FF
   other: {
-    source: [176, 190, 197],
-    target: [96, 125, 139]
-  }
+    source: [106, 116, 130]
+  } // Grey/300           #6A7482
+
 };
 exports.CATEGORY_COLORS = CATEGORY_COLORS;
 
@@ -220,7 +222,13 @@ function destPulseAlpha(arc, virtualTime) {
   return Math.round((1 - t / PULSE_DURATION) * PULSE_ALPHA);
 }
 
-function buildLayers(activeArcs, virtualTime) {
+function buildLayers(activeArcs, activeQuotes, virtualTime) {
+  var _ref = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {},
+      _ref$showRequests = _ref.showRequests,
+      showRequests = _ref$showRequests === void 0 ? true : _ref$showRequests,
+      _ref$showQuotes = _ref.showQuotes,
+      showQuotes = _ref$showQuotes === void 0 ? true : _ref$showQuotes;
+
   var _deck = deck,
       TripsLayer = _deck.TripsLayer,
       ScatterplotLayer = _deck.ScatterplotLayer;
@@ -462,6 +470,125 @@ function buildLayers(activeArcs, virtualTime) {
     updateTriggers: {
       getFillColor: virtualTime
     }
+  }); // ── Quote arcs (pro → job location) ─────────────────────────────────────
+
+  var quoteTripsLayer = new TripsLayer({
+    id: "quotes-trips",
+    data: activeQuotes,
+    getPath: function getPath(d) {
+      return computeArcWaypoints(d).path;
+    },
+    getTimestamps: function getTimestamps(d) {
+      return computeArcWaypoints(d).timestamps;
+    },
+    getColor: function getColor(d) {
+      return [].concat(_toConsumableArray(categoryColor(d.serviceCategory, "source")), [COMET_ALPHA]);
+    },
+    positionFormat: "XYZ",
+    currentTime: virtualTime,
+    trailLength: TRAIL_LENGTH,
+    widthMinPixels: IS_MOBILE ? COMET_WIDTH_PX_MOBILE : COMET_WIDTH_PX,
+    fadeTrail: true
   });
-  return [glowLayer, tripsLayer].concat(_toConsumableArray(FLASH_ENABLED ? [srcFlashOuter, srcFlashMid, srcFlashCore, dstFlashOuter, dstFlashMid, dstFlashCore] : []), [sourceBlobLayer, destBlobLayer, sourcePulseLayer, destPulseLayer]);
+  var quoteGlowLayer = new TripsLayer({
+    id: "quotes-trips-glow",
+    data: activeQuotes,
+    getPath: function getPath(d) {
+      return computeArcWaypoints(d).path;
+    },
+    getTimestamps: function getTimestamps(d) {
+      return computeArcWaypoints(d).timestamps;
+    },
+    getColor: function getColor(d) {
+      return [].concat(_toConsumableArray(categoryColor(d.serviceCategory, "source")), [GLOW_ALPHA]);
+    },
+    positionFormat: "XYZ",
+    currentTime: virtualTime,
+    trailLength: TRAIL_LENGTH,
+    widthMinPixels: GLOW_WIDTH_PX,
+    fadeTrail: true
+  });
+  var quoteSourcePulse = new ScatterplotLayer({
+    id: "quote-source-pulse",
+    data: activeQuotes,
+    getPosition: function getPosition(d) {
+      return [d.customerLng, d.customerLat];
+    },
+    getRadius: function getRadius(d) {
+      return sourcePulseRadius(d, virtualTime);
+    },
+    getFillColor: [0, 0, 0, 0],
+    getLineColor: function getLineColor(d) {
+      return [].concat(_toConsumableArray(categoryColor(d.serviceCategory, "source")), [sourcePulseAlpha(d, virtualTime)]);
+    },
+    stroked: true,
+    filled: false,
+    getLineWidth: PULSE_WIDTH_PX,
+    lineWidthUnits: "pixels",
+    radiusUnits: "pixels",
+    updateTriggers: {
+      getRadius: virtualTime,
+      getLineColor: virtualTime
+    }
+  });
+  var quoteDestPulse = new ScatterplotLayer({
+    id: "quote-dest-pulse",
+    data: activeQuotes,
+    getPosition: function getPosition(d) {
+      return [d.proLng, d.proLat];
+    },
+    getRadius: function getRadius(d) {
+      return destPulseRadius(d, virtualTime);
+    },
+    getFillColor: [0, 0, 0, 0],
+    getLineColor: function getLineColor(d) {
+      return [].concat(_toConsumableArray(categoryColor(d.serviceCategory, "source")), [destPulseAlpha(d, virtualTime)]);
+    },
+    stroked: true,
+    filled: false,
+    getLineWidth: PULSE_WIDTH_PX,
+    lineWidthUnits: "pixels",
+    radiusUnits: "pixels",
+    updateTriggers: {
+      getRadius: virtualTime,
+      getLineColor: virtualTime
+    }
+  });
+  var quoteSourceBlob = new ScatterplotLayer({
+    id: "quote-source-blob",
+    data: activeQuotes,
+    getPosition: function getPosition(d) {
+      return [d.customerLng, d.customerLat];
+    },
+    getRadius: function getRadius(d) {
+      return blobRadius(virtualTime - d.emittedAt);
+    },
+    getFillColor: function getFillColor(d) {
+      return [].concat(_toConsumableArray(categoryColor(d.serviceCategory, "source")), [blobAlpha(virtualTime - d.emittedAt)]);
+    },
+    radiusUnits: "pixels",
+    updateTriggers: {
+      getRadius: virtualTime,
+      getFillColor: virtualTime
+    }
+  });
+  var quoteDestBlob = new ScatterplotLayer({
+    id: "quote-dest-blob",
+    data: activeQuotes,
+    getPosition: function getPosition(d) {
+      return [d.proLng, d.proLat];
+    },
+    getRadius: function getRadius(d) {
+      return blobRadius(virtualTime - d.emittedAt - d.arcDuration);
+    },
+    getFillColor: function getFillColor(d) {
+      return [].concat(_toConsumableArray(categoryColor(d.serviceCategory, "source")), [blobAlpha(virtualTime - d.emittedAt - d.arcDuration)]);
+    },
+    radiusUnits: "pixels",
+    updateTriggers: {
+      getRadius: virtualTime,
+      getFillColor: virtualTime
+    }
+  });
+  return [].concat(_toConsumableArray(showRequests ? [glowLayer, tripsLayer] : []), _toConsumableArray(showRequests && FLASH_ENABLED ? [srcFlashOuter, srcFlashMid, srcFlashCore, dstFlashOuter, dstFlashMid, dstFlashCore] : []), _toConsumableArray(showRequests ? [sourceBlobLayer, destBlobLayer, sourcePulseLayer, destPulseLayer] : []), _toConsumableArray(showQuotes ? [quoteGlowLayer, quoteTripsLayer, quoteSourceBlob, quoteDestBlob, quoteSourcePulse, quoteDestPulse] : []));
 }
