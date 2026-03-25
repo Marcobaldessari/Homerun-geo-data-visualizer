@@ -65,7 +65,8 @@ map.on('load', () => {
     onSeek(virtualTime) { clearReviewCards(); resetStats(); },
   });
 
-  // Auto-play on load
+  // Start at 8 AM (8/24 of simDuration) then auto-play
+  playback._seekTo(Math.round(8 / 24 * city.simDuration));
   playback.play();
 
   // ── Keyboard shortcuts ──────────────────────────────────────────────────
@@ -161,9 +162,7 @@ map.on('load', () => {
       map.setMinZoom(next.minZoom);
       map.flyTo({ center: next.center, zoom: next.zoom, duration: 1200 });
 
-      // Reset and load new data
-      clearReviewCards();
-      resetStats();
+      // Load new city data at the current time (loadData calls onSeek which resets cards/stats)
       playback.loadData(next.events, next.simDuration, next.simStart, next.simEnd);
       playback.play();
     });
