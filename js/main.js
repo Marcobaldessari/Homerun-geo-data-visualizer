@@ -6,6 +6,10 @@ import { incrementJobs, incrementReviews, resetStats } from './stats.js';
 import { ISTANBUL_EVENTS, ISTANBUL_SIM_DURATION, ISTANBUL_SIM_START, ISTANBUL_SIM_END, ISTANBUL_CENTER, ISTANBUL_ZOOM } from './data-istanbul.js';
 import { ISTANBUL_QUOTE_EVENTS } from './data-istanbul-quotes.js';
 import { MILANO_EVENTS, MILANO_SIM_DURATION, MILANO_SIM_START, MILANO_SIM_END, MILANO_CENTER, MILANO_ZOOM } from './data-milano.js';
+import { ANKARA_EVENTS, ANKARA_SIM_DURATION, ANKARA_SIM_START, ANKARA_SIM_END, ANKARA_CENTER, ANKARA_ZOOM } from './data-ankara.js';
+import { IZMIR_EVENTS, IZMIR_SIM_DURATION, IZMIR_SIM_START, IZMIR_SIM_END, IZMIR_CENTER, IZMIR_ZOOM } from './data-izmir.js';
+import { ANTALYA_EVENTS, ANTALYA_SIM_DURATION, ANTALYA_SIM_START, ANTALYA_SIM_END, ANTALYA_CENTER, ANTALYA_ZOOM } from './data-antalya.js';
+import { KOCAELI_EVENTS, KOCAELI_SIM_DURATION, KOCAELI_SIM_START, KOCAELI_SIM_END, KOCAELI_CENTER, KOCAELI_ZOOM } from './data-kocaeli.js';
 
 const isMobile = window.innerWidth <= 768;
 
@@ -15,13 +19,17 @@ const ISTANBUL_ALL_EVENTS = [...ISTANBUL_EVENTS, ...ISTANBUL_QUOTE_EVENTS]
 
 const CITIES = {
   istanbul: { events: ISTANBUL_ALL_EVENTS, simDuration: ISTANBUL_SIM_DURATION, simStart: ISTANBUL_SIM_START, simEnd: ISTANBUL_SIM_END, center: ISTANBUL_CENTER, zoom: isMobile ? 9 : ISTANBUL_ZOOM, label: 'Istanbul' },
+  ankara:   { events: ANKARA_EVENTS,       simDuration: ANKARA_SIM_DURATION,   simStart: ANKARA_SIM_START,   simEnd: ANKARA_SIM_END,   center: ANKARA_CENTER,   zoom: isMobile ? 9 : ANKARA_ZOOM,   label: 'Ankara'   },
+  izmir:    { events: IZMIR_EVENTS,         simDuration: IZMIR_SIM_DURATION,    simStart: IZMIR_SIM_START,    simEnd: IZMIR_SIM_END,    center: IZMIR_CENTER,    zoom: isMobile ? 9 : IZMIR_ZOOM,    label: 'İzmir'    },
+  antalya:  { events: ANTALYA_EVENTS,       simDuration: ANTALYA_SIM_DURATION,  simStart: ANTALYA_SIM_START,  simEnd: ANTALYA_SIM_END,  center: ANTALYA_CENTER,  zoom: isMobile ? 9 : ANTALYA_ZOOM,  label: 'Antalya'  },
+  kocaeli:  { events: KOCAELI_EVENTS,       simDuration: KOCAELI_SIM_DURATION,  simStart: KOCAELI_SIM_START,  simEnd: KOCAELI_SIM_END,  center: KOCAELI_CENTER,  zoom: isMobile ? 9 : KOCAELI_ZOOM,  label: 'Kocaeli'  },
   milano:   { events: MILANO_EVENTS,        simDuration: MILANO_SIM_DURATION,   simStart: MILANO_SIM_START,   simEnd: MILANO_SIM_END,   center: MILANO_CENTER,   zoom: isMobile ? 9 : MILANO_ZOOM,   label: 'Milano'   },
 };
 
 let currentCity = 'istanbul';
 
 // Layer visibility state
-const layerVis = { showRequests: true, showQuotes: true, showReviews: true };
+const layerVis = { showRequests: true, showQuotes: true, showReviews: false };
 
 // ── 1. Initialise map ──────────────────────────────────────────────────────
 const map = initMap();
@@ -72,6 +80,15 @@ map.on('load', () => {
       layerVis.showReviews = !layerVis.showReviews;
       if (!layerVis.showReviews) clearReviewCards();
       syncReviewsBtn();
+    }
+    if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+      e.preventDefault();
+      const keys = Object.keys(CITIES);
+      const idx = keys.indexOf(currentCity);
+      const next = e.code === 'ArrowRight'
+        ? keys[(idx + 1) % keys.length]
+        : keys[(idx - 1 + keys.length) % keys.length];
+      document.querySelector(`.city-btn[data-city="${next}"]`).click();
     }
     if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
       e.preventDefault();

@@ -36,6 +36,10 @@ body {
 .brand-logo {
   height: 28px;
   width: auto;
+  max-width: none;
+  object-fit: contain;
+  display: block;
+  align-self: flex-start;
 }
 
 /* ── City toggle ── */

@@ -60,13 +60,13 @@ const IS_MOBILE = window.innerWidth <= 768;
 // Color palette per service category — sourced from Homerun Olympus Design System
 // https://www.figma.com/design/gWdvUQKkgSaV1sHX5QjbCG/Homerun---Olympus-Design-System?node-id=3289-90
 export const CATEGORY_COLORS = {
-  cleaning: { source: [115, 198, 255] }, // PoseidonBlue/600   #73C6FF
-  repair: { source: [236, 112, 44] }, // NotificationOrange/300  #EC702C
-  beauty: { source: [255, 135, 114] }, // AphroditePink/600  #FF8772
-  moving: { source: [211, 237, 113] }, // DemeterGreen/300   #D3ED71
-  education: { source: [255, 195, 45] }, // ApolloYellow/600   #FFC32D
-  events: { source: [153, 160, 255] }, // DionysusPurple/600 #99A0FF
-  other: { source: [106, 116, 130] }, // Grey/300           #6A7482
+  cleaning: { source: [115, 198, 255] }, // PoseidonBlue/600      #73C6FF
+  repair:   { source: [ 75, 155, 255] }, // PoseidonBlue/400      #4B9BFF  ← brand blue
+  beauty:   { source: [255, 135, 114] }, // AphroditePink/600     #FF8772
+  moving:   { source: [211, 237, 113] }, // DemeterGreen/300      #D3ED71
+  education:{ source: [255, 195,  45] }, // ApolloYellow/600      #FFC32D
+  events:   { source: [153, 160, 255] }, // DionysusPurple/600    #99A0FF
+  other:    { source: [ 44, 179,  79] }, // PrimaryGreen/300      #2CB34F  ← brand green
 };
 
 function categoryColor(category, type) {
