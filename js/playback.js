@@ -40,16 +40,7 @@ export class Playback {
     });
 
     speedSel.addEventListener('change', e => {
-      const wasPaused = !this.isPlaying;
-      if (this.isPlaying) {
-        // Recalibrate wallStart so virtualTime is continuous
-        this.pausedAt = this.virtualTime;
-        this.wallStart = performance.now();
-      }
       this.speedFactor = Number(e.target.value);
-      if (!wasPaused) {
-        this.wallStart = performance.now();
-      }
     });
 
     scrubber.addEventListener('input', e => {
@@ -120,11 +111,13 @@ export class Playback {
   _tick() {
     if (!this.isPlaying) return;
 
-    const elapsed = performance.now() - this.wallStart;
-    this.virtualTime = Math.min(
-      this.pausedAt + elapsed * this.speedFactor,
-      this.simDuration
-    );
+    const now = performance.now();
+    // Cap per-frame delta to 150 ms real time — prevents event bursts after
+    // browser pauses (e.g. parsing large data files on first load).
+    const delta = Math.min(now - this.wallStart, 150);
+    this.wallStart = now;
+    this.pausedAt = Math.min(this.pausedAt + delta * this.speedFactor, this.simDuration);
+    this.virtualTime = this.pausedAt;
 
     // Emit new events
     while (
