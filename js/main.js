@@ -65,7 +65,8 @@ map.on('load', () => {
     onSeek(virtualTime) { clearReviewCards(); resetStats(); },
   });
 
-  // Auto-play from midnight
+  // Start scrubber at 10 AM (10/24 × simDuration) then auto-play
+  playback._seekTo(Math.round(10 / 24 * city.simDuration));
   playback.play();
 
   // ── Keyboard shortcuts ──────────────────────────────────────────────────
