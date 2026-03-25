@@ -65,8 +65,7 @@ map.on('load', () => {
     onSeek(virtualTime) { clearReviewCards(); resetStats(); },
   });
 
-  // Start at 8 AM (8/24 of simDuration) then auto-play
-  playback._seekTo(Math.round(8 / 24 * city.simDuration));
+  // Auto-play from midnight
   playback.play();
 
   // ── Keyboard shortcuts ──────────────────────────────────────────────────

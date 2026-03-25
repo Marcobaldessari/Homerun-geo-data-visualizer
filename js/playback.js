@@ -152,10 +152,16 @@ export class Playback {
     this._renderFrame(this.virtualTime);
 
     if (this.virtualTime >= this.simDuration) {
+      // Loop: reset to midnight inline — avoids a recursive play() call
       this.onEnd();
-      this._seekTo(0);
-      this.play();
-      return;
+      this.activeArcs   = [];
+      this.activeQuotes = [];
+      this.eventPointer = 0;
+      this.pausedAt     = 0;
+      this.virtualTime  = 0;
+      this.onSeek(0);
+      this._renderFrame(0);
+      this.wallStart = performance.now();
     }
 
     this.rafId = requestAnimationFrame(() => this._tick());
