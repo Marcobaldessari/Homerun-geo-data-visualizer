@@ -3,27 +3,31 @@ import { buildLayers }      from './layers.js';
 import { Playback }         from './playback.js';
 import { emitReviewCard, updateReviewCards, clearReviewCards } from './reviews.js';
 import { incrementJobs, incrementReviews, resetStats } from './stats.js';
-import { ISTANBUL_EVENTS, ISTANBUL_SIM_DURATION, ISTANBUL_SIM_START, ISTANBUL_SIM_END, ISTANBUL_CENTER, ISTANBUL_ZOOM } from './data-istanbul.js';
-import { ISTANBUL_QUOTE_EVENTS } from './data-istanbul-quotes.js';
+import { TURKEY_EVENTS, TURKEY_SIM_START, TURKEY_SIM_END, TURKEY_CENTER, TURKEY_ZOOM } from './data-turkey.js';
 import { MILANO_EVENTS, MILANO_SIM_DURATION, MILANO_SIM_START, MILANO_SIM_END, MILANO_CENTER, MILANO_ZOOM } from './data-milano.js';
-import { ANKARA_EVENTS, ANKARA_SIM_DURATION, ANKARA_SIM_START, ANKARA_SIM_END, ANKARA_CENTER, ANKARA_ZOOM } from './data-ankara.js';
-import { IZMIR_EVENTS, IZMIR_SIM_DURATION, IZMIR_SIM_START, IZMIR_SIM_END, IZMIR_CENTER, IZMIR_ZOOM } from './data-izmir.js';
-import { ANTALYA_EVENTS, ANTALYA_SIM_DURATION, ANTALYA_SIM_START, ANTALYA_SIM_END, ANTALYA_CENTER, ANTALYA_ZOOM } from './data-antalya.js';
-import { KOCAELI_EVENTS, KOCAELI_SIM_DURATION, KOCAELI_SIM_START, KOCAELI_SIM_END, KOCAELI_CENTER, KOCAELI_ZOOM } from './data-kocaeli.js';
 
 const isMobile = window.innerWidth <= 768;
 
-// Merge Istanbul requests + quotes into one sorted event stream
-const ISTANBUL_ALL_EVENTS = [...ISTANBUL_EVENTS, ...ISTANBUL_QUOTE_EVENTS]
-  .sort((a, b) => a.timestamp - b.timestamp);
+// Derive per-city event streams from the shared Turkey dataset.
+// For city views, quotes are limited to same-province arcs (no cross-city).
+// Province codes: Istanbul=34, Ankara=6, İzmir=35, Bursa=16, Antalya=7, Kocaeli=41
+function cityEvents(provinceCode) {
+  return TURKEY_EVENTS.filter(e =>
+    e.province === provinceCode &&
+    (e.type !== 'quote' || e.proProvince === provinceCode) &&
+    (e.type !== 'job'   || e.customerProvince === provinceCode)
+  );
+}
 
 const CITIES = {
-  istanbul: { events: ISTANBUL_ALL_EVENTS, simDuration: ISTANBUL_SIM_DURATION, simStart: ISTANBUL_SIM_START, simEnd: ISTANBUL_SIM_END, center: ISTANBUL_CENTER, zoom: isMobile ? 9 : ISTANBUL_ZOOM, label: 'Istanbul' },
-  ankara:   { events: ANKARA_EVENTS,       simDuration: ANKARA_SIM_DURATION,   simStart: ANKARA_SIM_START,   simEnd: ANKARA_SIM_END,   center: ANKARA_CENTER,   zoom: isMobile ? 9 : ANKARA_ZOOM,   label: 'Ankara'   },
-  izmir:    { events: IZMIR_EVENTS,         simDuration: IZMIR_SIM_DURATION,    simStart: IZMIR_SIM_START,    simEnd: IZMIR_SIM_END,    center: IZMIR_CENTER,    zoom: isMobile ? 9 : IZMIR_ZOOM,    label: 'İzmir'    },
-  antalya:  { events: ANTALYA_EVENTS,       simDuration: ANTALYA_SIM_DURATION,  simStart: ANTALYA_SIM_START,  simEnd: ANTALYA_SIM_END,  center: ANTALYA_CENTER,  zoom: isMobile ? 9 : ANTALYA_ZOOM,  label: 'Antalya'  },
-  kocaeli:  { events: KOCAELI_EVENTS,       simDuration: KOCAELI_SIM_DURATION,  simStart: KOCAELI_SIM_START,  simEnd: KOCAELI_SIM_END,  center: KOCAELI_CENTER,  zoom: isMobile ? 9 : KOCAELI_ZOOM,  label: 'Kocaeli'  },
-  milano:   { events: MILANO_EVENTS,        simDuration: MILANO_SIM_DURATION,   simStart: MILANO_SIM_START,   simEnd: MILANO_SIM_END,   center: MILANO_CENTER,   zoom: isMobile ? 9 : MILANO_ZOOM,   label: 'Milano'   },
+  turkey:   { events: TURKEY_EVENTS,           simDuration: 600000,             simStart: TURKEY_SIM_START, simEnd: TURKEY_SIM_END, center: TURKEY_CENTER, zoom: isMobile ? 5 : TURKEY_ZOOM, minZoom: isMobile ? 4 : 5,  label: 'Turkey'   },
+  istanbul: { events: cityEvents(34),           simDuration: 600000,             simStart: TURKEY_SIM_START, simEnd: TURKEY_SIM_END, center: [28.97, 41.01], zoom: isMobile ? 9 : 11,         minZoom: isMobile ? 7 : 9,  label: 'Istanbul' },
+  ankara:   { events: cityEvents(6),            simDuration: 600000,             simStart: TURKEY_SIM_START, simEnd: TURKEY_SIM_END, center: [32.86, 39.93], zoom: isMobile ? 9 : 11,         minZoom: isMobile ? 7 : 9,  label: 'Ankara'   },
+  izmir:    { events: cityEvents(35),           simDuration: 600000,             simStart: TURKEY_SIM_START, simEnd: TURKEY_SIM_END, center: [27.14, 38.42], zoom: isMobile ? 9 : 11,         minZoom: isMobile ? 7 : 9,  label: 'İzmir'    },
+  bursa:    { events: cityEvents(16),           simDuration: 600000,             simStart: TURKEY_SIM_START, simEnd: TURKEY_SIM_END, center: [29.06, 40.19], zoom: isMobile ? 9 : 11,         minZoom: isMobile ? 7 : 9,  label: 'Bursa'    },
+  antalya:  { events: cityEvents(7),            simDuration: 600000,             simStart: TURKEY_SIM_START, simEnd: TURKEY_SIM_END, center: [30.71, 36.90], zoom: isMobile ? 9 : 11,         minZoom: isMobile ? 7 : 9,  label: 'Antalya'  },
+  kocaeli:  { events: cityEvents(41),           simDuration: 600000,             simStart: TURKEY_SIM_START, simEnd: TURKEY_SIM_END, center: [29.96, 40.77], zoom: isMobile ? 9 : 11,         minZoom: isMobile ? 7 : 9,  label: 'Kocaeli'  },
+  milano:   { events: MILANO_EVENTS,            simDuration: MILANO_SIM_DURATION, simStart: MILANO_SIM_START, simEnd: MILANO_SIM_END, center: MILANO_CENTER, zoom: isMobile ? 9 : MILANO_ZOOM, minZoom: isMobile ? 7 : 9,  label: 'Milano'   },
 };
 
 let currentCity = 'istanbul';
@@ -42,6 +46,7 @@ const deckOverlay = new deck.MapboxOverlay({
 
 map.on('load', () => {
   map.addControl(deckOverlay);
+  map.setMinZoom(CITIES[currentCity].minZoom);
 
   // ── 3. Start playback engine ─────────────────────────────────────────────
   const city = CITIES[currentCity];
@@ -152,7 +157,8 @@ map.on('load', () => {
       // Update branding
       document.title = `Homerun · ${next.label} Live`;
 
-      // Fly map to new city
+      // Update zoom limits and fly to new city
+      map.setMinZoom(next.minZoom);
       map.flyTo({ center: next.center, zoom: next.zoom, duration: 1200 });
 
       // Reset and load new data

@@ -9,8 +9,8 @@ const DEFAULT_PITCH = 50; // tilt in degrees (0 = flat, 85 = near-horizontal)
 const DEFAULT_BEARING = 0; // rotation in degrees (0 = north up)
 const MAX_PITCH = 85; // how far the user can tilt
 
-const MIN_ZOOM_DESKTOP = 9;
-const MIN_ZOOM_MOBILE = 7;
+const MIN_ZOOM_DESKTOP = 5;
+const MIN_ZOOM_MOBILE = 4;
 const MAX_ZOOM_DESKTOP = 14;
 const MAX_ZOOM_MOBILE = 14;
 
